@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>PMIS Demo - Simple Test UI</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0 16px 40px;
+      background: #f8f8f8;
+    }
+    h1 {
+      background: #333;
+      color: white;
+      padding: 12px 16px;
+      margin: 0 -16px 16px;
+    }
+    h2 {
+      margin-top: 32px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 4px;
+    }
+    fieldset {
+      margin: 8px 0;
+      padding: 8px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+    legend {
+      font-weight: bold;
+    }
+    label {
+      display: inline-block;
+      min-width: 130px;
+    }
+    input, select, textarea {
+      margin: 2px 0 6px;
+      padding: 2px 4px;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    button {
+      margin-top: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .section {
+      margin-bottom: 24px;
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 4px;
+    }
+    #output {
+      white-space: pre-wrap;
+      background: #111;
+      color: #eee;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      max-height: 400px;
+      overflow: auto;
+      margin-top: 16px;
+    }
+    .note {
+      font-size: 0.8rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+<h1>PMIS Demo - Simple DB Test UI</h1>
+
+<p class="note">
+  이 페이지는 <strong>로컬에서 REST API와 DB 기능이 잘 동작하는지</strong>를 간단히 확인하기 위한 테스트용 UI입니다.<br>
+  각 섹션에서 입력 후 버튼을 눌러 API를 호출하면, 아래 <strong>결과 콘솔</strong>에 응답 JSON이 표시됩니다.
+</p>
+
+<!-- 공통: 결과 출력 영역 -->
+<h2>결과 콘솔</h2>
+<pre id="output">여기에 응답이 표시됩니다.</pre>
+
+<hr>
+
+<!-- 1. Department -->
+<div class="section">
+  <h2>1. Department (부서)</h2>
+
+  <fieldset>
+    <legend>부서 생성</legend>
+    <label>부서명:</label>
+    <input type="text" id="deptName">
+    <button onclick="createDepartment()">Create Department</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>부서 목록 조회</legend>
+    <button onclick="getDepartments()">GET /api/departments</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>부서 단일 조회 / 수정 / 삭제</legend>
+    <label>부서 ID:</label>
+    <input type="number" id="deptId">
+    <br>
+    <label>새 이름(수정용):</label>
+    <input type="text" id="deptNewName">
+    <br>
+    <button onclick="getDepartment()">GET /api/departments/{id}</button>
+    <button onclick="updateDepartment()">PUT /api/departments/{id}</button>
+    <button onclick="deleteDepartment()">DELETE /api/departments/{id}</button>
+  </fieldset>
+</div>
+
+<!-- 2. Employee -->
+<div class="section">
+  <h2>2. Employee (직원)</h2>
+
+  <fieldset>
+    <legend>직원 생성</legend>
+    <label>이름:</label>
+    <input type="text" id="empName">
+    <br>
+    <label>부서 ID:</label>
+    <input type="number" id="empDeptId">
+    <br>
+    <button onclick="createEmployee()">Create Employee</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>직원 조회</legend>
+    <button onclick="getEmployees()">GET /api/employees</button>
+    <br>
+    <label>직원 ID:</label>
+    <input type="number" id="empId">
+    <button onclick="getEmployee()">GET /api/employees/{id}</button>
+    <br>
+    <label>부서 ID:</label>
+    <input type="number" id="empDeptFilterId">
+    <button onclick="getEmployeesByDepartment()">GET /api/employees/department/{deptId}</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>직원 수정 / 삭제</legend>
+    <label>직원 ID:</label>
+    <input type="number" id="empUpdateId">
+    <br>
+    <label>새 이름:</label>
+    <input type="text" id="empNewName">
+    <br>
+    <label>새 부서 ID:</label>
+    <input type="number" id="empNewDeptId">
+    <br>
+    <button onclick="updateEmployee()">PUT /api/employees/{id}</button>
+    <button onclick="deleteEmployee()">DELETE /api/employees/{id}</button>
+  </fieldset>
+</div>
+
+<!-- 3. Project -->
+<div class="section">
+  <h2>3. Project (프로젝트)</h2>
+
+  <fieldset>
+    <legend>프로젝트 생성</legend>
+    <label>이름:</label>
+    <input type="text" id="projName"><br>
+    <label>시작일(YYYY-MM-DD):</label>
+    <input type="text" id="projStart"><br>
+    <label>종료일(YYYY-MM-DD):</label>
+    <input type="text" id="projEnd"><br>
+    <label>상태(PLANNED/ONGOING/DONE):</label>
+    <input type="text" id="projStatus" value="PLANNED"><br>
+    <label>관리자 직원 ID:</label>
+    <input type="number" id="projManagerId"><br>
+    <button onclick="createProject()">Create Project</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>프로젝트 조회</legend>
+    <button onclick="getProjects()">GET /api/projects</button><br>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="projId"><br>
+    <button onclick="getProject()">GET /api/projects/{id}</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>프로젝트 수정 / 상태 변경 / 삭제</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="projUpdateId"><br>
+    <label>새 이름:</label>
+    <input type="text" id="projNewName"><br>
+    <label>새 시작일:</label>
+    <input type="text" id="projNewStart"><br>
+    <label>새 종료일:</label>
+    <input type="text" id="projNewEnd"><br>
+    <label>새 상태:</label>
+    <input type="text" id="projNewStatus"><br>
+    <label>새 관리자 직원 ID:</label>
+    <input type="number" id="projNewManagerId"><br>
+    <button onclick="updateProject()">PUT /api/projects/{id}</button>
+    <br><br>
+    <label>상태 변경용 상태:</label>
+    <input type="text" id="projStatusOnly" value="ONGOING">
+    <button onclick="updateProjectStatus()">PATCH /{id}/status</button>
+    <br><br>
+    <button onclick="deleteProject()">DELETE /api/projects/{id}</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>프로젝트-부서 연결</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="projDeptProjId"><br>
+    <label>부서 ID:</label>
+    <input type="number" id="projDeptDeptId"><br>
+    <button onclick="addProjectDepartment()">POST /api/projects/{id}/departments/{departmentId}</button>
+  </fieldset>
+</div>
+
+<!-- 4. Task -->
+<div class="section">
+  <h2>4. Task (업무)</h2>
+
+  <fieldset>
+    <legend>업무 생성</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="taskProjId"><br>
+    <label>업무명:</label>
+    <input type="text" id="taskName"><br>
+    <label>시작일:</label>
+    <input type="text" id="taskStart"><br>
+    <label>종료일:</label>
+    <input type="text" id="taskEnd"><br>
+    <label>상태(TODO/DOING/DONE):</label>
+    <input type="text" id="taskStatus" value="TODO"><br>
+    <label>우선순위(LOW/NORMAL/HIGH/CRITICAL):</label>
+    <input type="text" id="taskPriority" value="NORMAL"><br>
+    <button onclick="createTask()">POST /api/projects/{projectId}/tasks</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>업무 조회 / 상태 변경 / 삭제</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="taskProjListId">
+    <button onclick="getTasksByProject()">GET /api/projects/{projectId}/tasks</button>
+    <br><br>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="taskProjForStatusId"><br>
+    <label>업무 ID:</label>
+    <input type="number" id="taskIdForStatus"><br>
+    <label>새 상태:</label>
+    <input type="text" id="taskStatusOnly" value="DOING"><br>
+    <button onclick="updateTaskStatus()">PATCH /{projectId}/tasks/{taskId}/status</button>
+    <br><br>
+    <label>업무 ID(삭제용):</label>
+    <input type="number" id="taskIdToDelete"><br>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="taskProjForDeleteId"><br>
+    <button onclick="deleteTask()">DELETE /api/projects/{projectId}/tasks/{taskId}</button>
+  </fieldset>
+</div>
+
+<!-- 5. Task Dependency -->
+<div class="section">
+  <h2>5. Task Dependency (업무 의존관계)</h2>
+
+  <fieldset>
+    <legend>의존 관계 추가</legend>
+    <label>후행 작업 ID (URL의 taskId):</label>
+    <input type="number" id="depSuccessorId"><br>
+    <label>선행 작업 ID:</label>
+    <input type="number" id="depPredecessorId"><br>
+    <label>타입(FS/SS/FF/SF):</label>
+    <input type="text" id="depType" value="FS"><br>
+    <label>lagDays:</label>
+    <input type="number" id="depLagDays" value="0"><br>
+    <button onclick="addDependency()">POST /api/tasks/{taskId}/dependencies</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>의존 관계 조회 / 삭제</legend>
+    <label>후행 작업 ID:</label>
+    <input type="number" id="depTaskIdToGet"><br>
+    <button onclick="getDependencies()">GET /api/tasks/{taskId}/dependencies</button>
+    <br><br>
+    <label>후행 작업 ID:</label>
+    <input type="number" id="depTaskIdToDelete"><br>
+    <label>선행 작업 ID:</label>
+    <input type="number" id="depPredIdToDelete"><br>
+    <button onclick="deleteDependency()">DELETE /api/tasks/{taskId}/dependencies?predecessorTaskId=</button>
+  </fieldset>
+</div>
+
+<!-- 6. Resource & Allocation -->
+<div class="section">
+  <h2>6. Resource & Allocation (자원 및 할당)</h2>
+
+  <fieldset>
+    <legend>자원 생성 / 조회 / 수정 / 삭제</legend>
+    <label>자원명:</label>
+    <input type="text" id="resName"><br>
+    <label>타입(EQUIPMENT/ROOM/LICENSE/MATERIAL/OTHER):</label>
+    <input type="text" id="resType" value="EQUIPMENT"><br>
+    <label>수량:</label>
+    <input type="number" id="resQuantity" value="1"><br>
+    <button onclick="createResource()">POST /api/resources</button>
+    <br><br>
+    <button onclick="getResources()">GET /api/resources</button><br>
+    <label>자원 ID:</label>
+    <input type="number" id="resId"><br>
+    <button onclick="getResource()">GET /api/resources/{id}</button>
+    <br><br>
+    <label>자원 ID(수정/삭제):</label>
+    <input type="number" id="resUpdateId"><br>
+    <label>새 이름:</label>
+    <input type="text" id="resNewName"><br>
+    <label>새 타입:</label>
+    <input type="text" id="resNewType"><br>
+    <label>새 수량:</label>
+    <input type="number" id="resNewQuantity"><br>
+    <button onclick="updateResource()">PUT /api/resources/{id}</button>
+    <button onclick="deleteResource()">DELETE /api/resources/{id}</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>자원 할당</legend>
+    <label>자원 ID(URL):</label>
+    <input type="number" id="allocResId"><br>
+    <label>업무 ID:</label>
+    <input type="number" id="allocTaskId"><br>
+    <label>사용량:</label>
+    <input type="number" id="allocAmountUsed" value="1"><br>
+    <button onclick="allocateResource()">POST /api/resources/{resourceId}/allocate</button>
+    <br><br>
+    <label>업무 ID(할당 조회):</label>
+    <input type="number" id="allocTaskIdToGet"><br>
+    <button onclick="getAllocationsByTask()">GET /api/resources/tasks/{taskId}/allocations</button>
+  </fieldset>
+</div>
+
+<!-- 7. WorkLog -->
+<div class="section">
+  <h2>7. WorkLog (작업 기록)</h2>
+
+  <fieldset>
+    <legend>작업 기록 생성</legend>
+    <label>업무 ID:</label>
+    <input type="number" id="logTaskId"><br>
+    <label>직원 ID:</label>
+    <input type="number" id="logEmpId"><br>
+    <label>작업일(YYYY-MM-DD):</label>
+    <input type="text" id="logDate"><br>
+    <label>시간(예: 1.5):</label>
+    <input type="text" id="logHours" value="1.0"><br>
+    <label>메모:</label>
+    <input type="text" id="logNote"><br>
+    <button onclick="createWorkLog()">POST /api/tasks/{taskId}/worklogs</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>업무별 작업 기록 조회</legend>
+    <label>업무 ID:</label>
+    <input type="number" id="logTaskIdToGet"><br>
+    <button onclick="getWorkLogs()">GET /api/tasks/{taskId}/worklogs</button>
+  </fieldset>
+</div>
+
+<!-- 8. Comment -->
+<div class="section">
+  <h2>8. Comment (업무 댓글)</h2>
+
+  <fieldset>
+    <legend>댓글 추가</legend>
+    <label>업무 ID:</label>
+    <input type="number" id="cmtTaskId"><br>
+    <label>직원 ID:</label>
+    <input type="number" id="cmtEmpId"><br>
+    <label>내용:</label>
+    <input type="text" id="cmtContent"><br>
+    <button onclick="createComment()">POST /api/tasks/{taskId}/comments</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>댓글 조회</legend>
+    <label>업무 ID:</label>
+    <input type="number" id="cmtTaskIdToGet"><br>
+    <button onclick="getComments()">GET /api/tasks/{taskId}/comments</button>
+  </fieldset>
+</div>
+
+<!-- 9. Milestone -->
+<div class="section">
+  <h2>9. Milestone (프로젝트 마일스톤)</h2>
+
+  <fieldset>
+    <legend>마일스톤 생성</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="msProjId"><br>
+    <label>이름:</label>
+    <input type="text" id="msName"><br>
+    <label>기한(YYYY-MM-DD):</label>
+    <input type="text" id="msDueDate"><br>
+    <button onclick="createMilestone()">POST /api/projects/{projectId}/milestones</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>마일스톤 조회 / 완료</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="msProjIdToGet"><br>
+    <button onclick="getMilestones()">GET /api/projects/{projectId}/milestones</button>
+    <br><br>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="msProjIdForComplete"><br>
+    <label>마일스톤 ID:</label>
+    <input type="number" id="msIdForComplete"><br>
+    <button onclick="completeMilestone()">PATCH /{projectId}/milestones/{milestoneId}/complete</button>
+  </fieldset>
+</div>
+
+<!-- 10. Risk -->
+<div class="section">
+  <h2>10. Risk (프로젝트 리스크)</h2>
+
+  <fieldset>
+    <legend>리스크 생성</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="riskProjId"><br>
+    <label>담당자 직원 ID(없으면 비워둠):</label>
+    <input type="number" id="riskOwnerId"><br>
+    <label>제목:</label>
+    <input type="text" id="riskTitle"><br>
+    <label>설명:</label>
+    <input type="text" id="riskDesc"><br>
+    <label>레벨(LOW/MEDIUM/HIGH/CRITICAL):</label>
+    <input type="text" id="riskLevel" value="HIGH"><br>
+    <button onclick="createRisk()">POST /api/projects/{projectId}/risks</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>리스크 조회 / 상태 변경</legend>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="riskProjIdToGet"><br>
+    <button onclick="getRisks()">GET /api/projects/{projectId}/risks</button>
+    <br><br>
+    <label>프로젝트 ID:</label>
+    <input type="number" id="riskProjIdForStatus"><br>
+    <label>리스크 ID:</label>
+    <input type="number" id="riskIdForStatus"><br>
+    <label>새 상태(OPEN/MITIGATED/CLOSED):</label>
+    <input type="text" id="riskStatus" value="MITIGATED"><br>
+    <button onclick="updateRiskStatus()">PATCH /{projectId}/risks/{riskId}/status</button>
+  </fieldset>
+</div>
+
+<script>
+  const baseUrl = ''; // 같은 서버/포트에서 서빙하므로 빈 문자열이면 됨
+
+  function logResponse(label, data) {
+    const out = document.getElementById('output');
+    out.textContent = `[${new Date().toISOString()}] ${label}\n` +
+      JSON.stringify(data, null, 2);
+  }
+
+  function logError(label, err) {
+    const out = document.getElementById('output');
+    out.textContent = `[${new Date().toISOString()}] ERROR: ${label}\n` + err;
+  }
+
+  async function sendRequest(path, options, label) {
+    try {
+      const res = await fetch(baseUrl + path, options);
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { raw: text, status: res.status };
+      }
+      logResponse(label + ` [${res.status}]`, data);
+    } catch (e) {
+      logError(label, e);
+    }
+  }
+
+  // 1. Department
+  function createDepartment() {
+    const name = document.getElementById('deptName').value;
+    sendRequest('/api/departments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    }, 'Create Department');
+  }
+  function getDepartments() {
+    sendRequest('/api/departments', { method: 'GET' }, 'Get Departments');
+  }
+  function getDepartment() {
+    const id = document.getElementById('deptId').value;
+    sendRequest(`/api/departments/${id}`, { method: 'GET' }, 'Get Department');
+  }
+  function updateDepartment() {
+    const id = document.getElementById('deptId').value;
+    const name = document.getElementById('deptNewName').value;
+    sendRequest(`/api/departments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    }, 'Update Department');
+  }
+  function deleteDepartment() {
+    const id = document.getElementById('deptId').value;
+    sendRequest(`/api/departments/${id}`, { method: 'DELETE' }, 'Delete Department');
+  }
+
+  // 2. Employee
+  function createEmployee() {
+    const name = document.getElementById('empName').value;
+    const departmentId = Number(document.getElementById('empDeptId').value);
+    sendRequest('/api/employees', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, departmentId })
+    }, 'Create Employee');
+  }
+  function getEmployees() {
+    sendRequest('/api/employees', { method: 'GET' }, 'Get Employees');
+  }
+  function getEmployee() {
+    const id = document.getElementById('empId').value;
+    sendRequest(`/api/employees/${id}`, { method: 'GET' }, 'Get Employee');
+  }
+  function getEmployeesByDepartment() {
+    const deptId = document.getElementById('empDeptFilterId').value;
+    sendRequest(`/api/employees/department/${deptId}`, { method: 'GET' }, 'Get Employees by Department');
+  }
+  function updateEmployee() {
+    const id = document.getElementById('empUpdateId').value;
+    const name = document.getElementById('empNewName').value;
+    const departmentId = Number(document.getElementById('empNewDeptId').value);
+    sendRequest(`/api/employees/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, departmentId })
+    }, 'Update Employee');
+  }
+  function deleteEmployee() {
+    const id = document.getElementById('empUpdateId').value;
+    sendRequest(`/api/employees/${id}`, { method: 'DELETE' }, 'Delete Employee');
+  }
+
+  // 3. Project
+  function createProject() {
+    const name = document.getElementById('projName').value;
+    const startDate = document.getElementById('projStart').value || null;
+    const endDate = document.getElementById('projEnd').value || null;
+    const status = document.getElementById('projStatus').value || null;
+    const managerId = Number(document.getElementById('projManagerId').value);
+    sendRequest('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, startDate, endDate, status, managerId })
+    }, 'Create Project');
+  }
+  function getProjects() {
+    sendRequest('/api/projects', { method: 'GET' }, 'Get Projects');
+  }
+  function getProject() {
+    const id = document.getElementById('projId').value;
+    sendRequest(`/api/projects/${id}`, { method: 'GET' }, 'Get Project');
+  }
+  function updateProject() {
+    const id = document.getElementById('projUpdateId').value;
+    const name = document.getElementById('projNewName').value;
+    const startDate = document.getElementById('projNewStart').value || null;
+    const endDate = document.getElementById('projNewEnd').value || null;
+    const status = document.getElementById('projNewStatus').value || null;
+    const managerId = document.getElementById('projNewManagerId').value
+      ? Number(document.getElementById('projNewManagerId').value) : null;
+    sendRequest(`/api/projects/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, startDate, endDate, status, managerId })
+    }, 'Update Project');
+  }
+  function updateProjectStatus() {
+    const id = document.getElementById('projUpdateId').value;
+    const status = document.getElementById('projStatusOnly').value;
+    sendRequest(`/api/projects/${id}/status?status=${encodeURIComponent(status)}`, {
+      method: 'PATCH'
+    }, 'Update Project Status');
+  }
+  function deleteProject() {
+    const id = document.getElementById('projUpdateId').value;
+    sendRequest(`/api/projects/${id}`, { method: 'DELETE' }, 'Delete Project');
+  }
+  function addProjectDepartment() {
+    const projId = document.getElementById('projDeptProjId').value;
+    const deptId = document.getElementById('projDeptDeptId').value;
+    sendRequest(`/api/projects/${projId}/departments/${deptId}`, {
+      method: 'POST'
+    }, 'Add Project Department');
+  }
+
+  // 4. Task
+  function createTask() {
+    const projectId = document.getElementById('taskProjId').value;
+    const name = document.getElementById('taskName').value;
+    const startDate = document.getElementById('taskStart').value || null;
+    const endDate = document.getElementById('taskEnd').value || null;
+    const status = document.getElementById('taskStatus').value;
+    const priority = document.getElementById('taskPriority').value;
+    sendRequest(`/api/projects/${projectId}/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, startDate, endDate, status, priority })
+    }, 'Create Task');
+  }
+  function getTasksByProject() {
+    const projectId = document.getElementById('taskProjListId').value;
+    sendRequest(`/api/projects/${projectId}/tasks`, { method: 'GET' }, 'Get Tasks by Project');
+  }
+  function updateTaskStatus() {
+    const projectId = document.getElementById('taskProjForStatusId').value;
+    const taskId = document.getElementById('taskIdForStatus').value;
+    const status = document.getElementById('taskStatusOnly').value;
+    sendRequest(`/api/projects/${projectId}/tasks/${taskId}/status?status=${encodeURIComponent(status)}`, {
+      method: 'PATCH'
+    }, 'Update Task Status');
+  }
+  function deleteTask() {
+    const projectId = document.getElementById('taskProjForDeleteId').value;
+    const taskId = document.getElementById('taskIdToDelete').value;
+    sendRequest(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' }, 'Delete Task');
+  }
+
+  // 5. Task Dependency
+  function addDependency() {
+    const successorId = document.getElementById('depSuccessorId').value;
+    const predecessorTaskId = Number(document.getElementById('depPredecessorId').value);
+    const type = document.getElementById('depType').value;
+    const lagDays = Number(document.getElementById('depLagDays').value);
+    sendRequest(`/api/tasks/${successorId}/dependencies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ predecessorTaskId, type, lagDays })
+    }, 'Add Task Dependency');
+  }
+  function getDependencies() {
+    const taskId = document.getElementById('depTaskIdToGet').value;
+    sendRequest(`/api/tasks/${taskId}/dependencies`, { method: 'GET' }, 'Get Task Dependencies');
+  }
+  function deleteDependency() {
+    const taskId = document.getElementById('depTaskIdToDelete').value;
+    const predId = document.getElementById('depPredIdToDelete').value;
+    sendRequest(`/api/tasks/${taskId}/dependencies?predecessorTaskId=${predId}`, {
+      method: 'DELETE'
+    }, 'Delete Task Dependency');
+  }
+
+  // 6. Resource & Allocation
+  function createResource() {
+    const name = document.getElementById('resName').value;
+    const type = document.getElementById('resType').value;
+    const quantity = Number(document.getElementById('resQuantity').value);
+    sendRequest('/api/resources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, type, quantity })
+    }, 'Create Resource');
+  }
+  function getResources() {
+    sendRequest('/api/resources', { method: 'GET' }, 'Get Resources');
+  }
+  function getResource() {
+    const id = document.getElementById('resId').value;
+    sendRequest(`/api/resources/${id}`, { method: 'GET' }, 'Get Resource');
+  }
+  function updateResource() {
+    const id = document.getElementById('resUpdateId').value;
+    const name = document.getElementById('resNewName').value;
+    const type = document.getElementById('resNewType').value;
+    const quantity = Number(document.getElementById('resNewQuantity').value);
+    sendRequest(`/api/resources/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, type, quantity })
+    }, 'Update Resource');
+  }
+  function deleteResource() {
+    const id = document.getElementById('resUpdateId').value;
+    sendRequest(`/api/resources/${id}`, { method: 'DELETE' }, 'Delete Resource');
+  }
+  function allocateResource() {
+    const resourceId = document.getElementById('allocResId').value;
+    const taskId = Number(document.getElementById('allocTaskId').value);
+    const amountUsed = Number(document.getElementById('allocAmountUsed').value);
+    sendRequest(`/api/resources/${resourceId}/allocate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, amountUsed })
+    }, 'Allocate Resource');
+  }
+  function getAllocationsByTask() {
+    const taskId = document.getElementById('allocTaskIdToGet').value;
+    sendRequest(`/api/resources/tasks/${taskId}/allocations`, { method: 'GET' }, 'Get Allocations by Task');
+  }
+
+  // 7. WorkLog
+  function createWorkLog() {
+    const taskId = document.getElementById('logTaskId').value;
+    const employeeId = Number(document.getElementById('logEmpId').value);
+    const workDate = document.getElementById('logDate').value;
+    const hours = document.getElementById('logHours').value;
+    const note = document.getElementById('logNote').value;
+    sendRequest(`/api/tasks/${taskId}/worklogs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employeeId, workDate, hours, note })
+    }, 'Create WorkLog');
+  }
+  function getWorkLogs() {
+    const taskId = document.getElementById('logTaskIdToGet').value;
+    sendRequest(`/api/tasks/${taskId}/worklogs`, { method: 'GET' }, 'Get WorkLogs');
+  }
+
+  // 8. Comment
+  function createComment() {
+    const taskId = document.getElementById('cmtTaskId').value;
+    const employeeId = Number(document.getElementById('cmtEmpId').value);
+    const content = document.getElementById('cmtContent').value;
+    sendRequest(`/api/tasks/${taskId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employeeId, content })
+    }, 'Create Comment');
+  }
+  function getComments() {
+    const taskId = document.getElementById('cmtTaskIdToGet').value;
+    sendRequest(`/api/tasks/${taskId}/comments`, { method: 'GET' }, 'Get Comments');
+  }
+
+  // 9. Milestone
+  function createMilestone() {
+    const projectId = document.getElementById('msProjId').value;
+    const name = document.getElementById('msName').value;
+    const dueDate = document.getElementById('msDueDate').value;
+    sendRequest(`/api/projects/${projectId}/milestones`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, dueDate })
+    }, 'Create Milestone');
+  }
+  function getMilestones() {
+    const projectId = document.getElementById('msProjIdToGet').value;
+    sendRequest(`/api/projects/${projectId}/milestones`, { method: 'GET' }, 'Get Milestones');
+  }
+  function completeMilestone() {
+    const projectId = document.getElementById('msProjIdForComplete').value;
+    const milestoneId = document.getElementById('msIdForComplete').value;
+    sendRequest(`/api/projects/${projectId}/milestones/${milestoneId}/complete`, {
+      method: 'PATCH'
+    }, 'Complete Milestone');
+  }
+
+  // 10. Risk
+  function createRisk() {
+    const projectId = document.getElementById('riskProjId').value;
+    const ownerIdValue = document.getElementById('riskOwnerId').value;
+    const ownerId = ownerIdValue ? Number(ownerIdValue) : null;
+    const title = document.getElementById('riskTitle').value;
+    const description = document.getElementById('riskDesc').value;
+    const level = document.getElementById('riskLevel').value;
+    sendRequest(`/api/projects/${projectId}/risks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ownerId, title, description, level })
+    }, 'Create Risk');
+  }
+  function getRisks() {
+    const projectId = document.getElementById('riskProjIdToGet').value;
+    sendRequest(`/api/projects/${projectId}/risks`, { method: 'GET' }, 'Get Risks');
+  }
+  function updateRiskStatus() {
+    const projectId = document.getElementById('riskProjIdForStatus').value;
+    const riskId = document.getElementById('riskIdForStatus').value;
+    const status = document.getElementById('riskStatus').value;
+    sendRequest(`/api/projects/${projectId}/risks/${riskId}/status?status=${encodeURIComponent(status)}`, {
+      method: 'PATCH'
+    }, 'Update Risk Status');
+  }
+</script>
+</body>
+</html>
