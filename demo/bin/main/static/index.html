@@ -56,12 +56,21 @@
       white-space: pre-wrap;
       background: #111;
       color: #eee;
-      padding: 12px;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    max-height: 400px;
+    overflow: auto;
+    margin-top: 16px;
+  }
+    .section-output {
+      white-space: pre-wrap;
+      background: #222;
+      color: #eee;
+      padding: 8px;
       border-radius: 4px;
-      font-size: 0.85rem;
-      max-height: 400px;
-      overflow: auto;
-      margin-top: 16px;
+      font-size: 0.8rem;
+      margin: 8px 0;
     }
     .note {
       font-size: 0.8rem;
@@ -87,6 +96,7 @@
 <!-- 1. Department -->
 <div class="section">
   <h2>1. Department (부서)</h2>
+  <div class="section-output" id="out-dept">부서 관련 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>부서 생성</legend>
@@ -114,9 +124,35 @@
   </fieldset>
 </div>
 
+<!-- Role -->
+<div class="section">
+  <h2>Role (업무 역할)</h2>
+  <div class="section-output" id="out-role">역할 관련 응답이 여기에 표시됩니다.</div>
+
+  <fieldset>
+    <legend>역할 생성</legend>
+    <label>역할명:</label>
+    <input type="text" id="roleName"><br>
+    <button onclick="createRole()">POST /api/roles</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>역할 조회 / 수정 / 삭제</legend>
+    <label>역할 ID:</label>
+    <input type="number" id="roleId"><br>
+    <label>새 이름(수정용):</label>
+    <input type="text" id="roleNewName"><br>
+    <button onclick="getRoles()">GET /api/roles</button>
+    <button onclick="getRole()">GET /api/roles/{id}</button>
+    <button onclick="updateRole()">PUT /api/roles/{id}</button>
+    <button onclick="deleteRole()">DELETE /api/roles/{id}</button>
+  </fieldset>
+</div>
+
 <!-- 2. Employee -->
 <div class="section">
   <h2>2. Employee (직원)</h2>
+  <div class="section-output" id="out-emp">직원 관련 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>직원 생성</legend>
@@ -161,6 +197,7 @@
 <!-- 3. Project -->
 <div class="section">
   <h2>3. Project (프로젝트)</h2>
+  <div class="section-output" id="out-proj">프로젝트 관련 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>프로젝트 생성</legend>
@@ -221,6 +258,7 @@
 <!-- 4. Task -->
 <div class="section">
   <h2>4. Task (업무)</h2>
+  <div class="section-output" id="out-task">업무 관련 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>업무 생성</legend>
@@ -261,9 +299,44 @@
   </fieldset>
 </div>
 
+<!-- Task Assignment -->
+<div class="section">
+  <h2>Task Assignment (업무 담당/역할 매핑)</h2>
+  <div class="section-output" id="out-assign">업무 담당/역할 매핑 응답이 여기에 표시됩니다.</div>
+
+  <fieldset>
+    <legend>업무에 직원-역할 할당</legend>
+    <label>업무 ID:</label>
+    <input type="number" id="assignTaskId"><br>
+    <label>직원 ID:</label>
+    <input type="number" id="assignEmpId"><br>
+    <label>역할 ID:</label>
+    <input type="number" id="assignRoleId"><br>
+    <button onclick="assignTask()">POST /api/tasks/{taskId}/assignments</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>할당 조회 / 삭제</legend>
+    <label>업무 ID(조회/삭제용):</label>
+    <input type="number" id="assignTaskIdToGet"><br>
+    <button onclick="getAssignmentsByTask()">GET /api/tasks/{taskId}/assignments</button>
+    <br><br>
+    <label>직원 ID별 조회:</label>
+    <input type="number" id="assignEmpIdToGet"><br>
+    <button onclick="getAssignmentsByEmployee()">GET /api/employees/{employeeId}/assignments</button>
+    <br><br>
+    <label>삭제용 직원 ID:</label>
+    <input type="number" id="assignEmpIdToDelete"><br>
+    <label>삭제용 역할 ID:</label>
+    <input type="number" id="assignRoleIdToDelete"><br>
+    <button onclick="deleteAssignment()">DELETE /api/tasks/{taskId}/assignments?employeeId=&roleId=</button>
+  </fieldset>
+</div>
+
 <!-- 5. Task Dependency -->
 <div class="section">
   <h2>5. Task Dependency (업무 의존관계)</h2>
+  <div class="section-output" id="out-dep">업무 의존관계 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>의존 관계 추가</legend>
@@ -295,6 +368,7 @@
 <!-- 6. Resource & Allocation -->
 <div class="section">
   <h2>6. Resource & Allocation (자원 및 할당)</h2>
+  <div class="section-output" id="out-resource">자원 및 할당 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>자원 생성 / 조회 / 수정 / 삭제</legend>
@@ -342,6 +416,7 @@
 <!-- 7. WorkLog -->
 <div class="section">
   <h2>7. WorkLog (작업 기록)</h2>
+  <div class="section-output" id="out-worklog">작업 기록 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>작업 기록 생성</legend>
@@ -369,6 +444,7 @@
 <!-- 8. Comment -->
 <div class="section">
   <h2>8. Comment (업무 댓글)</h2>
+  <div class="section-output" id="out-comment">댓글 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>댓글 추가</legend>
@@ -392,6 +468,7 @@
 <!-- 9. Milestone -->
 <div class="section">
   <h2>9. Milestone (프로젝트 마일스톤)</h2>
+  <div class="section-output" id="out-ms">마일스톤 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>마일스톤 생성</legend>
@@ -421,6 +498,7 @@
 <!-- 10. Risk -->
 <div class="section">
   <h2>10. Risk (프로젝트 리스크)</h2>
+  <div class="section-output" id="out-risk">리스크 응답이 여기에 표시됩니다.</div>
 
   <fieldset>
     <legend>리스크 생성</legend>
@@ -456,26 +534,40 @@
 <script>
   const baseUrl = ''; // 같은 서버/포트에서 서빙하므로 빈 문자열이면 됨
 
-  function logResponse(label, data) {
-    const out = document.getElementById('output');
-    if (!out) {
-      console.error('Output element is missing from the page.');
-      return;
-    }
-    out.textContent = `[${new Date().toISOString()}] ${label}\n` +
+  function logResponse(label, data, outputId) {
+    const formatted = `[${new Date().toISOString()}] ${label}\n` +
       JSON.stringify(data, null, 2);
-  }
-
-  function logError(label, err) {
-    const out = document.getElementById('output');
-    if (!out) {
+    const target = (outputId && document.getElementById(outputId)) || document.getElementById('output');
+    if (!target) {
       console.error('Output element is missing from the page.');
       return;
     }
-    out.textContent = `[${new Date().toISOString()}] ERROR: ${label}\n` + err;
+    target.textContent = formatted;
+    if (outputId && outputId !== 'output') {
+      const globalOut = document.getElementById('output');
+      if (globalOut && globalOut !== target) {
+        globalOut.textContent = formatted;
+      }
+    }
   }
 
-  async function sendRequest(path, options, label) {
+  function logError(label, err, outputId) {
+    const formatted = `[${new Date().toISOString()}] ERROR: ${label}\n` + err;
+    const target = (outputId && document.getElementById(outputId)) || document.getElementById('output');
+    if (!target) {
+      console.error('Output element is missing from the page.');
+      return;
+    }
+    target.textContent = formatted;
+    if (outputId && outputId !== 'output') {
+      const globalOut = document.getElementById('output');
+      if (globalOut && globalOut !== target) {
+        globalOut.textContent = formatted;
+      }
+    }
+  }
+
+  async function sendRequest(path, options, label, outputId) {
     try {
       const res = await fetch(baseUrl + path, options);
       const text = await res.text();
@@ -485,9 +577,9 @@
       } catch {
         data = { raw: text, status: res.status };
       }
-      logResponse(label + ` [${res.status}]`, data);
+      logResponse(label + ` [${res.status}]`, data, outputId);
     } catch (e) {
-      logError(label, e);
+      logError(label, e, outputId);
     }
   }
 
@@ -498,14 +590,14 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
-    }, 'Create Department');
+    }, 'Create Department', 'out-dept');
   }
   function getDepartments() {
-    sendRequest('/api/departments', { method: 'GET' }, 'Get Departments');
+    sendRequest('/api/departments', { method: 'GET' }, 'Get Departments', 'out-dept');
   }
   function getDepartment() {
     const id = document.getElementById('deptId').value;
-    sendRequest(`/api/departments/${id}`, { method: 'GET' }, 'Get Department');
+    sendRequest(`/api/departments/${id}`, { method: 'GET' }, 'Get Department', 'out-dept');
   }
   function updateDepartment() {
     const id = document.getElementById('deptId').value;
@@ -514,11 +606,41 @@
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
-    }, 'Update Department');
+    }, 'Update Department', 'out-dept');
   }
   function deleteDepartment() {
     const id = document.getElementById('deptId').value;
-    sendRequest(`/api/departments/${id}`, { method: 'DELETE' }, 'Delete Department');
+    sendRequest(`/api/departments/${id}`, { method: 'DELETE' }, 'Delete Department', 'out-dept');
+  }
+
+  // Role
+  function createRole() {
+    const name = document.getElementById('roleName').value;
+    sendRequest('/api/roles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    }, 'Create Role', 'out-role');
+  }
+  function getRoles() {
+    sendRequest('/api/roles', { method: 'GET' }, 'Get Roles', 'out-role');
+  }
+  function getRole() {
+    const id = document.getElementById('roleId').value;
+    sendRequest(`/api/roles/${id}`, { method: 'GET' }, 'Get Role', 'out-role');
+  }
+  function updateRole() {
+    const id = document.getElementById('roleId').value;
+    const name = document.getElementById('roleNewName').value;
+    sendRequest(`/api/roles/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    }, 'Update Role', 'out-role');
+  }
+  function deleteRole() {
+    const id = document.getElementById('roleId').value;
+    sendRequest(`/api/roles/${id}`, { method: 'DELETE' }, 'Delete Role', 'out-role');
   }
 
   // 2. Employee
@@ -529,18 +651,18 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, departmentId })
-    }, 'Create Employee');
+    }, 'Create Employee', 'out-emp');
   }
   function getEmployees() {
-    sendRequest('/api/employees', { method: 'GET' }, 'Get Employees');
+    sendRequest('/api/employees', { method: 'GET' }, 'Get Employees', 'out-emp');
   }
   function getEmployee() {
     const id = document.getElementById('empId').value;
-    sendRequest(`/api/employees/${id}`, { method: 'GET' }, 'Get Employee');
+    sendRequest(`/api/employees/${id}`, { method: 'GET' }, 'Get Employee', 'out-emp');
   }
   function getEmployeesByDepartment() {
     const deptId = document.getElementById('empDeptFilterId').value;
-    sendRequest(`/api/employees/department/${deptId}`, { method: 'GET' }, 'Get Employees by Department');
+    sendRequest(`/api/employees/department/${deptId}`, { method: 'GET' }, 'Get Employees by Department', 'out-emp');
   }
   function updateEmployee() {
     const id = document.getElementById('empUpdateId').value;
@@ -550,11 +672,11 @@
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, departmentId })
-    }, 'Update Employee');
+    }, 'Update Employee', 'out-emp');
   }
   function deleteEmployee() {
     const id = document.getElementById('empUpdateId').value;
-    sendRequest(`/api/employees/${id}`, { method: 'DELETE' }, 'Delete Employee');
+    sendRequest(`/api/employees/${id}`, { method: 'DELETE' }, 'Delete Employee', 'out-emp');
   }
 
   // 3. Project
@@ -568,14 +690,14 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, startDate, endDate, status, managerId })
-    }, 'Create Project');
+    }, 'Create Project', 'out-proj');
   }
   function getProjects() {
-    sendRequest('/api/projects', { method: 'GET' }, 'Get Projects');
+    sendRequest('/api/projects', { method: 'GET' }, 'Get Projects', 'out-proj');
   }
   function getProject() {
     const id = document.getElementById('projId').value;
-    sendRequest(`/api/projects/${id}`, { method: 'GET' }, 'Get Project');
+    sendRequest(`/api/projects/${id}`, { method: 'GET' }, 'Get Project', 'out-proj');
   }
   function updateProject() {
     const id = document.getElementById('projUpdateId').value;
@@ -589,25 +711,25 @@
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, startDate, endDate, status, managerId })
-    }, 'Update Project');
+    }, 'Update Project', 'out-proj');
   }
   function updateProjectStatus() {
     const id = document.getElementById('projUpdateId').value;
     const status = document.getElementById('projStatusOnly').value;
     sendRequest(`/api/projects/${id}/status?status=${encodeURIComponent(status)}`, {
       method: 'PATCH'
-    }, 'Update Project Status');
+    }, 'Update Project Status', 'out-proj');
   }
   function deleteProject() {
     const id = document.getElementById('projUpdateId').value;
-    sendRequest(`/api/projects/${id}`, { method: 'DELETE' }, 'Delete Project');
+    sendRequest(`/api/projects/${id}`, { method: 'DELETE' }, 'Delete Project', 'out-proj');
   }
   function addProjectDepartment() {
     const projId = document.getElementById('projDeptProjId').value;
     const deptId = document.getElementById('projDeptDeptId').value;
     sendRequest(`/api/projects/${projId}/departments/${deptId}`, {
       method: 'POST'
-    }, 'Add Project Department');
+    }, 'Add Project Department', 'out-proj');
   }
 
   // 4. Task
@@ -622,11 +744,11 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, startDate, endDate, status, priority })
-    }, 'Create Task');
+    }, 'Create Task', 'out-task');
   }
   function getTasksByProject() {
     const projectId = document.getElementById('taskProjListId').value;
-    sendRequest(`/api/projects/${projectId}/tasks`, { method: 'GET' }, 'Get Tasks by Project');
+    sendRequest(`/api/projects/${projectId}/tasks`, { method: 'GET' }, 'Get Tasks by Project', 'out-task');
   }
   function updateTaskStatus() {
     const projectId = document.getElementById('taskProjForStatusId').value;
@@ -634,12 +756,38 @@
     const status = document.getElementById('taskStatusOnly').value;
     sendRequest(`/api/projects/${projectId}/tasks/${taskId}/status?status=${encodeURIComponent(status)}`, {
       method: 'PATCH'
-    }, 'Update Task Status');
+    }, 'Update Task Status', 'out-task');
   }
   function deleteTask() {
     const projectId = document.getElementById('taskProjForDeleteId').value;
     const taskId = document.getElementById('taskIdToDelete').value;
-    sendRequest(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' }, 'Delete Task');
+    sendRequest(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' }, 'Delete Task', 'out-task');
+  }
+
+  // Task Assignment
+  function assignTask() {
+    const taskId = document.getElementById('assignTaskId').value;
+    const employeeId = Number(document.getElementById('assignEmpId').value);
+    const roleId = Number(document.getElementById('assignRoleId').value);
+    sendRequest(`/api/tasks/${taskId}/assignments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employeeId, roleId })
+    }, 'Assign Task', 'out-assign');
+  }
+  function getAssignmentsByTask() {
+    const taskId = document.getElementById('assignTaskIdToGet').value;
+    sendRequest(`/api/tasks/${taskId}/assignments`, { method: 'GET' }, 'Get Assignments by Task', 'out-assign');
+  }
+  function getAssignmentsByEmployee() {
+    const employeeId = document.getElementById('assignEmpIdToGet').value;
+    sendRequest(`/api/employees/${employeeId}/assignments`, { method: 'GET' }, 'Get Assignments by Employee', 'out-assign');
+  }
+  function deleteAssignment() {
+    const taskId = document.getElementById('assignTaskIdToGet').value;
+    const employeeId = document.getElementById('assignEmpIdToDelete').value;
+    const roleId = document.getElementById('assignRoleIdToDelete').value;
+    sendRequest(`/api/tasks/${taskId}/assignments?employeeId=${employeeId}&roleId=${roleId}`, { method: 'DELETE' }, 'Delete Assignment', 'out-assign');
   }
 
   // 5. Task Dependency
@@ -652,18 +800,18 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ predecessorTaskId, type, lagDays })
-    }, 'Add Task Dependency');
+    }, 'Add Task Dependency', 'out-dep');
   }
   function getDependencies() {
     const taskId = document.getElementById('depTaskIdToGet').value;
-    sendRequest(`/api/tasks/${taskId}/dependencies`, { method: 'GET' }, 'Get Task Dependencies');
+    sendRequest(`/api/tasks/${taskId}/dependencies`, { method: 'GET' }, 'Get Task Dependencies', 'out-dep');
   }
   function deleteDependency() {
     const taskId = document.getElementById('depTaskIdToDelete').value;
     const predId = document.getElementById('depPredIdToDelete').value;
     sendRequest(`/api/tasks/${taskId}/dependencies?predecessorTaskId=${predId}`, {
       method: 'DELETE'
-    }, 'Delete Task Dependency');
+    }, 'Delete Task Dependency', 'out-dep');
   }
 
   // 6. Resource & Allocation
@@ -675,14 +823,14 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, type, quantity })
-    }, 'Create Resource');
+    }, 'Create Resource', 'out-resource');
   }
   function getResources() {
-    sendRequest('/api/resources', { method: 'GET' }, 'Get Resources');
+    sendRequest('/api/resources', { method: 'GET' }, 'Get Resources', 'out-resource');
   }
   function getResource() {
     const id = document.getElementById('resId').value;
-    sendRequest(`/api/resources/${id}`, { method: 'GET' }, 'Get Resource');
+    sendRequest(`/api/resources/${id}`, { method: 'GET' }, 'Get Resource', 'out-resource');
   }
   function updateResource() {
     const id = document.getElementById('resUpdateId').value;
@@ -693,11 +841,11 @@
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, type, quantity })
-    }, 'Update Resource');
+    }, 'Update Resource', 'out-resource');
   }
   function deleteResource() {
     const id = document.getElementById('resUpdateId').value;
-    sendRequest(`/api/resources/${id}`, { method: 'DELETE' }, 'Delete Resource');
+    sendRequest(`/api/resources/${id}`, { method: 'DELETE' }, 'Delete Resource', 'out-resource');
   }
   function allocateResource() {
     const resourceId = document.getElementById('allocResId').value;
@@ -707,11 +855,11 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ taskId, amountUsed })
-    }, 'Allocate Resource');
+    }, 'Allocate Resource', 'out-resource');
   }
   function getAllocationsByTask() {
     const taskId = document.getElementById('allocTaskIdToGet').value;
-    sendRequest(`/api/resources/tasks/${taskId}/allocations`, { method: 'GET' }, 'Get Allocations by Task');
+    sendRequest(`/api/resources/tasks/${taskId}/allocations`, { method: 'GET' }, 'Get Allocations by Task', 'out-resource');
   }
 
   // 7. WorkLog
@@ -725,11 +873,11 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ employeeId, workDate, hours, note })
-    }, 'Create WorkLog');
+    }, 'Create WorkLog', 'out-worklog');
   }
   function getWorkLogs() {
     const taskId = document.getElementById('logTaskIdToGet').value;
-    sendRequest(`/api/tasks/${taskId}/worklogs`, { method: 'GET' }, 'Get WorkLogs');
+    sendRequest(`/api/tasks/${taskId}/worklogs`, { method: 'GET' }, 'Get WorkLogs', 'out-worklog');
   }
 
   // 8. Comment
@@ -741,11 +889,11 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ employeeId, content })
-    }, 'Create Comment');
+    }, 'Create Comment', 'out-comment');
   }
   function getComments() {
     const taskId = document.getElementById('cmtTaskIdToGet').value;
-    sendRequest(`/api/tasks/${taskId}/comments`, { method: 'GET' }, 'Get Comments');
+    sendRequest(`/api/tasks/${taskId}/comments`, { method: 'GET' }, 'Get Comments', 'out-comment');
   }
 
   // 9. Milestone
@@ -757,18 +905,18 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, dueDate })
-    }, 'Create Milestone');
+    }, 'Create Milestone', 'out-ms');
   }
   function getMilestones() {
     const projectId = document.getElementById('msProjIdToGet').value;
-    sendRequest(`/api/projects/${projectId}/milestones`, { method: 'GET' }, 'Get Milestones');
+    sendRequest(`/api/projects/${projectId}/milestones`, { method: 'GET' }, 'Get Milestones', 'out-ms');
   }
   function completeMilestone() {
     const projectId = document.getElementById('msProjIdForComplete').value;
     const milestoneId = document.getElementById('msIdForComplete').value;
     sendRequest(`/api/projects/${projectId}/milestones/${milestoneId}/complete`, {
       method: 'PATCH'
-    }, 'Complete Milestone');
+    }, 'Complete Milestone', 'out-ms');
   }
 
   // 10. Risk
@@ -783,11 +931,11 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ownerId, title, description, level })
-    }, 'Create Risk');
+    }, 'Create Risk', 'out-risk');
   }
   function getRisks() {
     const projectId = document.getElementById('riskProjIdToGet').value;
-    sendRequest(`/api/projects/${projectId}/risks`, { method: 'GET' }, 'Get Risks');
+    sendRequest(`/api/projects/${projectId}/risks`, { method: 'GET' }, 'Get Risks', 'out-risk');
   }
   function updateRiskStatus() {
     const projectId = document.getElementById('riskProjIdForStatus').value;
@@ -795,7 +943,7 @@
     const status = document.getElementById('riskStatus').value;
     sendRequest(`/api/projects/${projectId}/risks/${riskId}/status?status=${encodeURIComponent(status)}`, {
       method: 'PATCH'
-    }, 'Update Risk Status');
+    }, 'Update Risk Status', 'out-risk');
   }
 </script>
 </body>
