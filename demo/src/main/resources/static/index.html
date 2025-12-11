@@ -80,7 +80,7 @@
 
 <!-- 공통: 결과 출력 영역 -->
 <h2>결과 콘솔</h2>
-<pre id="output">여기에 응답이 표시됩니다.</pre>
+<div id="output">아직 응답이 없습니다.</div>
 
 <hr>
 
@@ -458,12 +458,20 @@
 
   function logResponse(label, data) {
     const out = document.getElementById('output');
+    if (!out) {
+      console.error('Output element is missing from the page.');
+      return;
+    }
     out.textContent = `[${new Date().toISOString()}] ${label}\n` +
       JSON.stringify(data, null, 2);
   }
 
   function logError(label, err) {
     const out = document.getElementById('output');
+    if (!out) {
+      console.error('Output element is missing from the page.');
+      return;
+    }
     out.textContent = `[${new Date().toISOString()}] ERROR: ${label}\n` + err;
   }
 
