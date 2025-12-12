@@ -741,6 +741,185 @@ BEGIN
     END IF;
 END$$
 
+-- Task Dependency 생성/삭제 (프로젝트 매니저만 허용)
+CREATE PROCEDURE IF NOT EXISTS create_task_dependency_with_permission(
+    IN p_predecessor_task_id INT,
+    IN p_successor_task_id INT,
+    IN p_type ENUM('FS','SS','FF','SF'),
+    IN p_lag_days INT,
+    IN p_employee_id INT
+)
+BEGIN
+    DECLARE has_permission TINYINT(1);
+    DECLARE pre_project_id INT;
+    DECLARE suc_project_id INT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SELECT 'ERROR' as result, 'Database error occurred during dependency creation' as message;
+        ROLLBACK;
+    END;
+    
+    START TRANSACTION;
+    
+    SELECT project_id INTO pre_project_id FROM task WHERE id = p_predecessor_task_id;
+    SELECT project_id INTO suc_project_id FROM task WHERE id = p_successor_task_id;
+    
+    IF pre_project_id IS NULL OR suc_project_id IS NULL THEN
+        SELECT 'NOT_FOUND' as result, 'Predecessor or Successor task not found' as message;
+        ROLLBACK;
+    ELSEIF pre_project_id != suc_project_id THEN
+        SELECT 'INVALID_INPUT' as result, 'Tasks must belong to the same project' as message;
+        ROLLBACK;
+    ELSE
+        SET has_permission = check_project_child_write_permission(pre_project_id, p_employee_id);
+        IF has_permission = -1 THEN
+            SELECT 'NOT_FOUND' as result, 'Project or Employee not found' as message;
+            ROLLBACK;
+        ELSEIF has_permission = 0 THEN
+            SELECT 'ACCESS_DENIED' as result, 'Only the project manager can create task dependencies' as message;
+            ROLLBACK;
+        ELSE
+            INSERT INTO task_dependency (predecessor_task_id, successor_task_id, type, lag_days)
+            VALUES (p_predecessor_task_id, p_successor_task_id, p_type, p_lag_days);
+            SELECT 'SUCCESS' as result, 'Task dependency created' as message;
+            COMMIT;
+        END IF;
+    END IF;
+END$$
+
+CREATE PROCEDURE IF NOT EXISTS delete_task_dependency_with_permission(
+    IN p_predecessor_task_id INT,
+    IN p_successor_task_id INT,
+    IN p_employee_id INT
+)
+BEGIN
+    DECLARE has_permission TINYINT(1);
+    DECLARE pre_project_id INT;
+    DECLARE suc_project_id INT;
+    DECLARE dep_exists INT DEFAULT 0;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SELECT 'ERROR' as result, 'Database error occurred during dependency delete' as message;
+        ROLLBACK;
+    END;
+    
+    START TRANSACTION;
+    SELECT project_id INTO pre_project_id FROM task WHERE id = p_predecessor_task_id;
+    SELECT project_id INTO suc_project_id FROM task WHERE id = p_successor_task_id;
+    SELECT COUNT(*) INTO dep_exists FROM task_dependency
+        WHERE predecessor_task_id = p_predecessor_task_id AND successor_task_id = p_successor_task_id;
+    
+    IF pre_project_id IS NULL OR suc_project_id IS NULL THEN
+        SELECT 'NOT_FOUND' as result, 'Predecessor or Successor task not found' as message;
+        ROLLBACK;
+    ELSEIF pre_project_id != suc_project_id THEN
+        SELECT 'INVALID_INPUT' as result, 'Tasks must belong to the same project' as message;
+        ROLLBACK;
+    ELSEIF dep_exists = 0 THEN
+        SELECT 'NOT_FOUND' as result, 'Task dependency not found' as message;
+        ROLLBACK;
+    ELSE
+        SET has_permission = check_project_child_write_permission(pre_project_id, p_employee_id);
+        IF has_permission = -1 THEN
+            SELECT 'NOT_FOUND' as result, 'Project or Employee not found' as message;
+            ROLLBACK;
+        ELSEIF has_permission = 0 THEN
+            SELECT 'ACCESS_DENIED' as result, 'Only the project manager can delete task dependencies' as message;
+            ROLLBACK;
+        ELSE
+            DELETE FROM task_dependency
+            WHERE predecessor_task_id = p_predecessor_task_id
+              AND successor_task_id = p_successor_task_id;
+            SELECT 'SUCCESS' as result, 'Task dependency deleted' as message, ROW_COUNT() as rows_affected;
+            COMMIT;
+        END IF;
+    END IF;
+END$$
+
+-- Task Assignment 추가/삭제 (프로젝트 매니저만 허용)
+CREATE PROCEDURE IF NOT EXISTS create_task_assignment_with_permission(
+    IN p_task_id INT,
+    IN p_employee_id_to_assign INT,
+    IN p_role_id INT,
+    IN p_employee_id_requester INT
+)
+BEGIN
+    DECLARE task_project_id INT;
+    DECLARE has_permission TINYINT(1);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SELECT 'ERROR' as result, 'Database error occurred during task assignment creation' as message;
+        ROLLBACK;
+    END;
+    
+    START TRANSACTION;
+    SELECT project_id INTO task_project_id FROM task WHERE id = p_task_id;
+    IF task_project_id IS NULL THEN
+        SELECT 'NOT_FOUND' as result, 'Task not found' as message;
+        ROLLBACK;
+    ELSE
+        SET has_permission = check_project_child_write_permission(task_project_id, p_employee_id_requester);
+        IF has_permission = -1 THEN
+            SELECT 'NOT_FOUND' as result, 'Project or Employee (requester) not found' as message;
+            ROLLBACK;
+        ELSEIF has_permission = 0 THEN
+            SELECT 'ACCESS_DENIED' as result, 'Only the project manager can assign tasks' as message;
+            ROLLBACK;
+        ELSE
+            INSERT INTO task_assignment (task_id, employee_id, role_id)
+            VALUES (p_task_id, p_employee_id_to_assign, p_role_id);
+            SELECT 'SUCCESS' as result, 'Task assignment created' as message;
+            COMMIT;
+        END IF;
+    END IF;
+END$$
+
+CREATE PROCEDURE IF NOT EXISTS delete_task_assignment_with_permission(
+    IN p_task_id INT,
+    IN p_employee_id_to_remove INT,
+    IN p_role_id INT,
+    IN p_employee_id_requester INT
+)
+BEGIN
+    DECLARE task_project_id INT;
+    DECLARE has_permission TINYINT(1);
+    DECLARE assignment_exists INT DEFAULT 0;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SELECT 'ERROR' as result, 'Database error occurred during task assignment delete' as message;
+        ROLLBACK;
+    END;
+    
+    START TRANSACTION;
+    SELECT project_id INTO task_project_id FROM task WHERE id = p_task_id;
+    SELECT COUNT(*) INTO assignment_exists FROM task_assignment
+        WHERE task_id = p_task_id AND employee_id = p_employee_id_to_remove AND role_id = p_role_id;
+    
+    IF task_project_id IS NULL THEN
+        SELECT 'NOT_FOUND' as result, 'Task not found' as message;
+        ROLLBACK;
+    ELSEIF assignment_exists = 0 THEN
+        SELECT 'NOT_FOUND' as result, 'Task assignment not found' as message;
+        ROLLBACK;
+    ELSE
+        SET has_permission = check_project_child_write_permission(task_project_id, p_employee_id_requester);
+        IF has_permission = -1 THEN
+            SELECT 'NOT_FOUND' as result, 'Project or Employee (requester) not found' as message;
+            ROLLBACK;
+        ELSEIF has_permission = 0 THEN
+            SELECT 'ACCESS_DENIED' as result, 'Only the project manager can delete task assignments' as message;
+            ROLLBACK;
+        ELSE
+            DELETE FROM task_assignment
+            WHERE task_id = p_task_id
+              AND employee_id = p_employee_id_to_remove
+              AND role_id = p_role_id;
+            SELECT 'SUCCESS' as result, 'Task assignment deleted' as message, ROW_COUNT() as rows_affected;
+            COMMIT;
+        END IF;
+    END IF;
+END$$
+
 -- Task 조회 프로시저 (권한 체크 포함)
 CREATE PROCEDURE IF NOT EXISTS get_task_with_permission(
     IN p_task_id INT,

@@ -4,6 +4,7 @@ import com.pmis.demo.domain.entity.Task;
 import com.pmis.demo.domain.enums.TaskStatus;
 import com.pmis.demo.dto.TaskCreateRequest;
 import com.pmis.demo.dto.TaskResponse;
+import com.pmis.demo.dto.TaskResponseForEmployee;
 import com.pmis.demo.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,12 @@ public class TaskController {
     @GetMapping
     public List<TaskResponse> getTasks(@PathVariable Long projectId) {
         return taskService.getTasksByProject(projectId);
+    }
+
+    @GetMapping("/accessibles")
+    public List<TaskResponseForEmployee> getAccessibleTasks(@PathVariable Long projectId,
+                                                            @RequestParam Long employeeId) {
+        return taskService.getAccessibleTasksByEmployee(projectId, employeeId);
     }
 
     @PatchMapping("/{taskId}/status")

@@ -5,6 +5,7 @@ import com.pmis.demo.domain.entity.Role;
 import com.pmis.demo.domain.entity.Task;
 import com.pmis.demo.domain.entity.TaskAssignment;
 import com.pmis.demo.domain.entity.TaskAssignmentId;
+import com.pmis.demo.dto.TaskResponseForEmployee;
 import com.pmis.demo.dto.TaskAssignmentByEmployeeResponse;
 import com.pmis.demo.dto.TaskAssignmentByTaskResponse;
 import com.pmis.demo.repository.EmployeeRepository;
@@ -25,9 +26,11 @@ public class TaskAssignmentService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
 
-    public TaskAssignment assign(Long taskId, Long employeeId, Long roleId) {
+    public TaskAssignment assign(Long taskId, Long employeeId, Long roleId, Long requesterId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        assertManager(task, requesterId);
+
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         Role role = roleRepository.findById(roleId)
@@ -60,8 +63,34 @@ public class TaskAssignmentService {
                 .toList();
     }
 
-    public void remove(Long taskId, Long employeeId, Long roleId) {
+    public void remove(Long taskId, Long employeeId, Long roleId, Long requesterId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        assertManager(task, requesterId);
+
         TaskAssignmentId id = new TaskAssignmentId(taskId, employeeId, roleId);
         assignmentRepository.deleteById(id);
+    }
+
+    public List<TaskResponseForEmployee> getAssignedTasks(Long employeeId) {
+        return assignmentRepository.findByEmployeeId(employeeId).stream()
+                .map(assignment -> TaskResponseForEmployee.builder()
+                        .id(assignment.getTask().getId())
+                        .name(assignment.getTask().getName())
+                        .projectId(assignment.getTask().getProject() != null
+                                ? assignment.getTask().getProject().getId() : null)
+                        .build())
+                .toList();
+    }
+
+    private void assertManager(Task task, Long requesterId) {
+        if (requesterId == null) {
+            throw new IllegalArgumentException("Employee ID is required");
+        }
+        Long managerId = task.getProject() != null && task.getProject().getManager() != null
+                ? task.getProject().getManager().getId() : null;
+        if (managerId == null || !managerId.equals(requesterId)) {
+            throw new IllegalArgumentException("Only the project manager can modify task assignments");
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.pmis.demo.domain.entity.Project;
 import com.pmis.demo.domain.entity.Task;
 import com.pmis.demo.domain.enums.TaskStatus;
 import com.pmis.demo.dto.TaskResponse;
+import com.pmis.demo.dto.TaskResponseForEmployee;
 import com.pmis.demo.repository.ProjectRepository;
 import com.pmis.demo.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,12 @@ public class TaskService {
                 .toList();
     }
 
+    public List<TaskResponseForEmployee> getAccessibleTasksByEmployee(Long projectId, Long employeeId) {
+        return taskRepository.findByProjectId(projectId).stream()
+                .map(this::toEmployeeResponse)
+                .toList();
+    }
+
     public Task updateStatus(Long projectId, Long taskId, TaskStatus status, Long employeeId) {
         Task task = findTaskInProject(projectId, taskId);
         assertManagerAndGet(projectId, employeeId);
@@ -56,6 +63,15 @@ public class TaskService {
                 .endDate(task.getEndDate())
                 .status(task.getStatus())
                 .priority(task.getPriority())
+                .build();
+    }
+
+    private TaskResponseForEmployee toEmployeeResponse(Task task) {
+        Long projectId = task.getProject() != null ? task.getProject().getId() : null;
+        return TaskResponseForEmployee.builder()
+                .id(task.getId())
+                .name(task.getName())
+                .projectId(projectId)
                 .build();
     }
 

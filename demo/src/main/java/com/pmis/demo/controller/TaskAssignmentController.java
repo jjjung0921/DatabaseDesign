@@ -3,6 +3,7 @@ package com.pmis.demo.controller;
 import com.pmis.demo.domain.entity.TaskAssignment;
 import com.pmis.demo.dto.TaskAssignmentByEmployeeResponse;
 import com.pmis.demo.dto.TaskAssignmentByTaskResponse;
+import com.pmis.demo.dto.TaskResponseForEmployee;
 import com.pmis.demo.service.TaskAssignmentService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,9 @@ public class TaskAssignmentController {
 
     @PostMapping("/tasks/{taskId}/assignments")
     public TaskAssignment assign(@PathVariable Long taskId,
+                                 @RequestParam Long employeeId,
                                  @RequestBody AssignmentRequest request) {
-        return assignmentService.assign(taskId, request.getEmployeeId(), request.getRoleId());
+        return assignmentService.assign(taskId, request.getEmployeeId(), request.getRoleId(), employeeId);
     }
 
     @GetMapping("/tasks/{taskId}/assignments")
@@ -34,11 +36,17 @@ public class TaskAssignmentController {
         return assignmentService.getByEmployee(employeeId);
     }
 
+    @GetMapping("/employees/{employeeId}/tasks")
+    public List<TaskResponseForEmployee> getAssignedTasks(@PathVariable Long employeeId) {
+        return assignmentService.getAssignedTasks(employeeId);
+    }
+
     @DeleteMapping("/tasks/{taskId}/assignments")
     public void delete(@PathVariable Long taskId,
                        @RequestParam Long employeeId,
-                       @RequestParam Long roleId) {
-        assignmentService.remove(taskId, employeeId, roleId);
+                       @RequestParam Long roleId,
+                       @RequestParam Long requesterId) {
+        assignmentService.remove(taskId, employeeId, roleId, requesterId);
     }
 
     @Getter

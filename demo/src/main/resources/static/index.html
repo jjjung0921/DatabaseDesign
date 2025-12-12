@@ -289,6 +289,10 @@
     <input type="number" id="taskProjListId">
     <button onclick="getTasksByProject()">GET /api/projects/{projectId}/tasks</button>
     <br><br>
+    <label>직원 ID별 할당된 업무 조회:</label>
+    <input type="number" id="taskAccessibleEmpId">
+    <button onclick="getAccessibleTasksByEmployee()">GET /api/employees/{employeeId}/tasks</button>
+    <br><br>
     <label>프로젝트 ID:</label>
     <input type="number" id="taskProjForStatusId"><br>
     <label>업무 ID:</label>
@@ -322,6 +326,8 @@
     <input type="number" id="assignEmpId"><br>
     <label>역할 ID:</label>
     <input type="number" id="assignRoleId"><br>
+    <label>요청자 직원 ID(PM):</label>
+    <input type="number" id="assignRequesterId"><br>
     <button onclick="assignTask()">POST /api/tasks/{taskId}/assignments</button>
   </fieldset>
 
@@ -339,16 +345,18 @@
     <input type="number" id="assignEmpIdToDelete"><br>
     <label>삭제용 역할 ID:</label>
     <input type="number" id="assignRoleIdToDelete"><br>
+    <label>요청자 직원 ID(PM):</label>
+    <input type="number" id="assignRequesterIdToDelete"><br>
     <button onclick="deleteAssignment()">DELETE /api/tasks/{taskId}/assignments?employeeId=&roleId=</button>
   </fieldset>
 </div>
 
 <!-- 5. Task Dependency -->
-<div class="section">
-  <h2>5. Task Dependency (업무 의존관계)</h2>
-  <div class="section-output" id="out-dep">업무 의존관계 응답이 여기에 표시됩니다.</div>
+  <div class="section">
+    <h2>5. Task Dependency (업무 의존관계)</h2>
+    <div class="section-output" id="out-dep">업무 의존관계 응답이 여기에 표시됩니다.</div>
 
-  <fieldset>
+    <fieldset>
     <legend>의존 관계 추가</legend>
     <label>후행 작업 ID (URL의 taskId):</label>
     <input type="number" id="depSuccessorId"><br>
@@ -358,6 +366,8 @@
     <input type="text" id="depType" value="FS"><br>
     <label>lagDays:</label>
     <input type="number" id="depLagDays" value="0"><br>
+    <label>요청자 직원 ID(PM):</label>
+    <input type="number" id="depRequesterId"><br>
     <button onclick="addDependency()">POST /api/tasks/{taskId}/dependencies</button>
   </fieldset>
 
@@ -371,6 +381,8 @@
     <input type="number" id="depTaskIdToDelete"><br>
     <label>선행 작업 ID:</label>
     <input type="number" id="depPredIdToDelete"><br>
+    <label>요청자 직원 ID(PM):</label>
+    <input type="number" id="depRequesterIdToDelete"><br>
     <button onclick="deleteDependency()">DELETE /api/tasks/{taskId}/dependencies?predecessorTaskId=</button>
   </fieldset>
 </div>
@@ -464,7 +476,7 @@
     <input type="number" id="cmtEmpId"><br>
     <label>내용:</label>
     <input type="text" id="cmtContent"><br>
-    <button onclick="createComment()">POST /api/tasks/{taskId}/comments</button>
+    <button onclick="addComment()">POST /api/tasks/{taskId}/comments</button>
   </fieldset>
 
   <fieldset>
@@ -780,6 +792,14 @@
     const projectId = document.getElementById('taskProjListId').value;
     sendRequest(`/api/projects/${projectId}/tasks`, { method: 'GET' }, 'Get Tasks by Project', 'out-task');
   }
+  function getAccessibleTasksByEmployee() {
+    const employeeId = document.getElementById('taskAccessibleEmpId').value;
+    if (!employeeId) {
+      alert('직원 ID를 입력하세요.');
+      return;
+    }
+    sendRequest(`/api/employees/${employeeId}/tasks`, { method: 'GET' }, 'Get Assigned Tasks (id/name/projectId only) by Employee', 'out-task');
+  }
   function updateTaskStatus() {
     const projectId = document.getElementById('taskProjForStatusId').value;
     const taskId = document.getElementById('taskIdForStatus').value;
@@ -805,7 +825,9 @@
     const taskId = document.getElementById('assignTaskId').value;
     const employeeId = Number(document.getElementById('assignEmpId').value);
     const roleId = Number(document.getElementById('assignRoleId').value);
-    sendRequest(`/api/tasks/${taskId}/assignments`, {
+    const requesterId = document.getElementById('assignRequesterId').value;
+    const employeeQuery = requesterId ? `?employeeId=${encodeURIComponent(requesterId)}` : '';
+    sendRequest(`/api/tasks/${taskId}/assignments${employeeQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ employeeId, roleId })
@@ -823,7 +845,14 @@
     const taskId = document.getElementById('assignTaskIdToGet').value;
     const employeeId = document.getElementById('assignEmpIdToDelete').value;
     const roleId = document.getElementById('assignRoleIdToDelete').value;
-    sendRequest(`/api/tasks/${taskId}/assignments?employeeId=${employeeId}&roleId=${roleId}`, { method: 'DELETE' }, 'Delete Assignment', 'out-assign');
+    const requesterId = document.getElementById('assignRequesterIdToDelete').value;
+    const queryParts = [
+      `employeeId=${encodeURIComponent(employeeId)}`,
+      `roleId=${encodeURIComponent(roleId)}`
+    ];
+    if (requesterId) queryParts.push(`requesterId=${encodeURIComponent(requesterId)}`);
+    const query = `?${queryParts.join('&')}`;
+    sendRequest(`/api/tasks/${taskId}/assignments${query}`, { method: 'DELETE' }, 'Delete Assignment', 'out-assign');
   }
 
   // 5. Task Dependency
@@ -832,7 +861,9 @@
     const predecessorTaskId = Number(document.getElementById('depPredecessorId').value);
     const type = document.getElementById('depType').value;
     const lagDays = Number(document.getElementById('depLagDays').value);
-    sendRequest(`/api/tasks/${successorId}/dependencies`, {
+    const requesterId = document.getElementById('depRequesterId').value;
+    const employeeQuery = requesterId ? `?employeeId=${encodeURIComponent(requesterId)}` : '';
+    sendRequest(`/api/tasks/${successorId}/dependencies${employeeQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ predecessorTaskId, type, lagDays })
@@ -845,7 +876,11 @@
   function deleteDependency() {
     const taskId = document.getElementById('depTaskIdToDelete').value;
     const predId = document.getElementById('depPredIdToDelete').value;
-    sendRequest(`/api/tasks/${taskId}/dependencies?predecessorTaskId=${predId}`, {
+    const requesterId = document.getElementById('depRequesterIdToDelete').value;
+    const queryParts = [`predecessorTaskId=${encodeURIComponent(predId)}`];
+    if (requesterId) queryParts.push(`employeeId=${encodeURIComponent(requesterId)}`);
+    const query = `?${queryParts.join('&')}`;
+    sendRequest(`/api/tasks/${taskId}/dependencies${query}`, {
       method: 'DELETE'
     }, 'Delete Task Dependency', 'out-dep');
   }
@@ -917,19 +952,31 @@
   }
 
   // 8. Comment
-  function createComment() {
+  async function addComment() {
     const taskId = document.getElementById('cmtTaskId').value;
-    const employeeId = Number(document.getElementById('cmtEmpId').value);
+    const employeeIdValue = document.getElementById('cmtEmpId').value;
     const content = document.getElementById('cmtContent').value;
-    sendRequest(`/api/tasks/${taskId}/comments`, {
+    if (!taskId || !employeeIdValue || !content) {
+      alert('업무 ID, 직원 ID, 내용을 모두 입력하세요.');
+      return;
+    }
+    const employeeId = Number(employeeIdValue);
+    await sendRequest(`/api/tasks/${taskId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ employeeId, content })
     }, 'Create Comment', 'out-comment');
+    // 최신 댓글 목록을 다시 불러와 출력
+    await getComments(taskId);
   }
-  function getComments() {
-    const taskId = document.getElementById('cmtTaskIdToGet').value;
-    sendRequest(`/api/tasks/${taskId}/comments`, { method: 'GET' }, 'Get Comments', 'out-comment');
+  async function getComments(taskIdFromCreate) {
+    const fallbackTaskId = document.getElementById('cmtTaskId').value;
+    const taskId = taskIdFromCreate || document.getElementById('cmtTaskIdToGet').value || fallbackTaskId;
+    if (!taskId) {
+      alert('업무 ID를 입력하세요.');
+      return;
+    }
+    await sendRequest(`/api/tasks/${taskId}/comments`, { method: 'GET' }, 'Get Comments', 'out-comment');
   }
 
   // 9. Milestone

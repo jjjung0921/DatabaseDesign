@@ -9,6 +9,7 @@ import com.pmis.demo.repository.TaskCommentRepository;
 import com.pmis.demo.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,7 +22,14 @@ public class CommentService {
     private final TaskRepository taskRepository;
     private final EmployeeRepository employeeRepository;
 
+    @Transactional
     public TaskComment addComment(Long taskId, Long employeeId, String content) {
+        if (employeeId == null) {
+            throw new IllegalArgumentException("Employee ID is required");
+        }
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("Content cannot be empty");
+        }
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
         Employee employee = employeeRepository.findById(employeeId)
