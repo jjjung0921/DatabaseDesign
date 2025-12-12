@@ -34,7 +34,7 @@ public class RoleService {
     public Role update(Long id, Role update) {
         Role role = findRole(id);
         role.setName(normalizeRoleName(update.getName()));
-        // Update permissions only if provided (nullable -> keep existing)
+        // Update permissions only if provided
         if (update.getCanRead() != null) role.setCanRead(update.getCanRead());
         if (update.getCanWrite() != null) role.setCanWrite(update.getCanWrite());
         if (update.getCanDelete() != null) role.setCanDelete(update.getCanDelete());
