@@ -5,6 +5,8 @@ import com.pmis.demo.domain.entity.Role;
 import com.pmis.demo.domain.entity.Task;
 import com.pmis.demo.domain.entity.TaskAssignment;
 import com.pmis.demo.domain.entity.TaskAssignmentId;
+import com.pmis.demo.dto.TaskAssignmentByEmployeeResponse;
+import com.pmis.demo.dto.TaskAssignmentByTaskResponse;
 import com.pmis.demo.repository.EmployeeRepository;
 import com.pmis.demo.repository.RoleRepository;
 import com.pmis.demo.repository.TaskAssignmentRepository;
@@ -39,12 +41,23 @@ public class TaskAssignmentService {
         return assignmentRepository.save(assignment);
     }
 
-    public List<TaskAssignment> getByTask(Long taskId) {
-        return assignmentRepository.findByTaskId(taskId);
+    public List<TaskAssignmentByTaskResponse> getByTask(Long taskId) {
+        return assignmentRepository.findByTaskId(taskId).stream()
+                .map(assignment -> TaskAssignmentByTaskResponse.builder()
+                        .employeeId(assignment.getEmployee().getId())
+                        .employeeName(assignment.getEmployee().getName())
+                        .roleId(assignment.getRole().getId())
+                        .build())
+                .toList();
     }
 
-    public List<TaskAssignment> getByEmployee(Long employeeId) {
-        return assignmentRepository.findByEmployeeId(employeeId);
+    public List<TaskAssignmentByEmployeeResponse> getByEmployee(Long employeeId) {
+        return assignmentRepository.findByEmployeeId(employeeId).stream()
+                .map(assignment -> TaskAssignmentByEmployeeResponse.builder()
+                        .taskId(assignment.getTask().getId())
+                        .taskName(assignment.getTask().getName())
+                        .build())
+                .toList();
     }
 
     public void remove(Long taskId, Long employeeId, Long roleId) {

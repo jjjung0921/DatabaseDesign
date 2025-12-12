@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "TaskDependency")
+@Table(name = "task_dependency")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 @IdClass(TaskDependencyId.class)

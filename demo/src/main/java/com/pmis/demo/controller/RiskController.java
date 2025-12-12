@@ -2,6 +2,7 @@ package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.ProjectRisk;
 import com.pmis.demo.domain.enums.RiskLevel;
+import com.pmis.demo.dto.ProjectRiskResponse;
 import com.pmis.demo.service.RiskService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +20,11 @@ public class RiskController {
 
     @PostMapping
     public ProjectRisk createRisk(@PathVariable Long projectId,
+                                  @RequestParam Long employeeId,
                                   @RequestBody RiskCreateRequest request) {
         return riskService.createRisk(
                 projectId,
+                employeeId,
                 request.getOwnerId(),
                 request.getTitle(),
                 request.getDescription(),
@@ -30,15 +33,16 @@ public class RiskController {
     }
 
     @GetMapping
-    public List<ProjectRisk> getRisks(@PathVariable Long projectId) {
+    public List<ProjectRiskResponse> getRisks(@PathVariable Long projectId) {
         return riskService.getRisksByProject(projectId);
     }
 
     @PatchMapping("/{riskId}/status")
     public ProjectRisk updateStatus(@PathVariable Long projectId,
                                     @PathVariable Long riskId,
-                                    @RequestParam String status) {
-        return riskService.updateStatus(riskId, status);
+                                    @RequestParam String status,
+                                    @RequestParam Long employeeId) {
+        return riskService.updateStatus(projectId, riskId, status, employeeId);
     }
 
     @Getter @Setter

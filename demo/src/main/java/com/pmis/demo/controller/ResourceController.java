@@ -3,6 +3,8 @@ package com.pmis.demo.controller;
 import com.pmis.demo.domain.entity.Resource;
 import com.pmis.demo.domain.entity.ResourceAllocation;
 import com.pmis.demo.domain.enums.ResourceType;
+import com.pmis.demo.dto.ResourceAllocationResponse;
+import com.pmis.demo.dto.ResourceResponse;
 import com.pmis.demo.service.ResourceService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -29,12 +31,12 @@ public class ResourceController {
     }
 
     @GetMapping
-    public List<Resource> getAll() {
+    public List<ResourceResponse> getAll() {
         return resourceService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Resource getOne(@PathVariable Long id) {
+    public ResourceResponse getOne(@PathVariable Long id) {
         return resourceService.getById(id);
     }
 
@@ -65,7 +67,7 @@ public class ResourceController {
     }
 
     @GetMapping("/tasks/{taskId}/allocations")
-    public List<ResourceAllocation> getAllocationsByTask(@PathVariable Long taskId) {
+    public List<ResourceAllocationResponse> getAllocationsByTask(@PathVariable Long taskId) {
         return resourceService.getAllocationsByTask(taskId);
     }
 

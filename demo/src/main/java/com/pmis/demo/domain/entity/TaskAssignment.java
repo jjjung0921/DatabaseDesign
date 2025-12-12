@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "TaskAssignment")
+@Table(name = "task_assignment")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 @IdClass(TaskAssignmentId.class)

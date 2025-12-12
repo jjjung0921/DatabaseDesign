@@ -1,6 +1,7 @@
 package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.Role;
+import com.pmis.demo.dto.RoleResponse;
 import com.pmis.demo.service.RoleService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +26,12 @@ public class RoleController {
     }
 
     @GetMapping
-    public List<Role> getAll() {
+    public List<RoleResponse> getAll() {
         return roleService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Role getOne(@PathVariable Long id) {
+    public RoleResponse getOne(@PathVariable Long id) {
         return roleService.getById(id);
     }
 

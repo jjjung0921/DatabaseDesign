@@ -3,6 +3,8 @@ package com.pmis.demo.service;
 import com.pmis.demo.domain.entity.Resource;
 import com.pmis.demo.domain.entity.ResourceAllocation;
 import com.pmis.demo.domain.entity.Task;
+import com.pmis.demo.dto.ResourceAllocationResponse;
+import com.pmis.demo.dto.ResourceResponse;
 import com.pmis.demo.repository.ResourceAllocationRepository;
 import com.pmis.demo.repository.ResourceRepository;
 import com.pmis.demo.repository.TaskRepository;
@@ -23,17 +25,18 @@ public class ResourceService {
         return resourceRepository.save(resource);
     }
 
-    public List<Resource> getAll() {
-        return resourceRepository.findAll();
+    public List<ResourceResponse> getAll() {
+        return resourceRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
     }
 
-    public Resource getById(Long id) {
-        return resourceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Resource not found"));
+    public ResourceResponse getById(Long id) {
+        return toResponse(findResource(id));
     }
 
     public Resource update(Long id, Resource update) {
-        Resource resource = getById(id);
+        Resource resource = findResource(id);
         resource.setName(update.getName());
         resource.setType(update.getType());
         resource.setQuantity(update.getQuantity());
@@ -61,7 +64,32 @@ public class ResourceService {
         return allocationRepository.save(allocation);
     }
 
-    public List<ResourceAllocation> getAllocationsByTask(Long taskId) {
-        return allocationRepository.findByTaskId(taskId);
+    public List<ResourceAllocationResponse> getAllocationsByTask(Long taskId) {
+        return allocationRepository.findByTaskId(taskId).stream()
+                .map(this::toAllocationResponse)
+                .toList();
+    }
+
+    private Resource findResource(Long id) {
+        return resourceRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Resource not found"));
+    }
+
+    private ResourceResponse toResponse(Resource resource) {
+        return ResourceResponse.builder()
+                .id(resource.getId())
+                .name(resource.getName())
+                .type(resource.getType())
+                .quantity(resource.getQuantity())
+                .build();
+    }
+
+    private ResourceAllocationResponse toAllocationResponse(ResourceAllocation allocation) {
+        return ResourceAllocationResponse.builder()
+                .taskId(allocation.getTask().getId())
+                .resourceId(allocation.getResource().getId())
+                .resourceName(allocation.getResource().getName())
+                .amountUsed(allocation.getAmountUsed())
+                .build();
     }
 }

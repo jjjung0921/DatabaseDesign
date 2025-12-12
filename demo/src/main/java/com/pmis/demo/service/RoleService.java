@@ -1,6 +1,7 @@
 package com.pmis.demo.service;
 
 import com.pmis.demo.domain.entity.Role;
+import com.pmis.demo.dto.RoleResponse;
 import com.pmis.demo.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,22 +18,35 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
-    public List<Role> getAll() {
-        return roleRepository.findAll();
+    public List<RoleResponse> getAll() {
+        return roleRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
     }
 
-    public Role getById(Long id) {
-        return roleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+    public RoleResponse getById(Long id) {
+        return toResponse(findRole(id));
     }
 
     public Role update(Long id, Role update) {
-        Role role = getById(id);
+        Role role = findRole(id);
         role.setName(update.getName());
         return roleRepository.save(role);
     }
 
     public void delete(Long id) {
         roleRepository.deleteById(id);
+    }
+
+    private Role findRole(Long id) {
+        return roleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+    }
+
+    private RoleResponse toResponse(Role role) {
+        return RoleResponse.builder()
+                .id(role.getId())
+                .name(role.getName())
+                .build();
     }
 }

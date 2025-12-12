@@ -3,6 +3,7 @@ package com.pmis.demo.service;
 import com.pmis.demo.domain.entity.Employee;
 import com.pmis.demo.domain.entity.Task;
 import com.pmis.demo.domain.entity.TaskWorkLog;
+import com.pmis.demo.dto.TaskWorkLogResponse;
 import com.pmis.demo.repository.EmployeeRepository;
 import com.pmis.demo.repository.TaskRepository;
 import com.pmis.demo.repository.TaskWorkLogRepository;
@@ -38,7 +39,20 @@ public class WorkLogService {
         return workLogRepository.save(log);
     }
 
-    public List<TaskWorkLog> getTaskLogs(Long taskId) {
-        return workLogRepository.findByTaskId(taskId);
+    public List<TaskWorkLogResponse> getTaskLogs(Long taskId) {
+        return workLogRepository.findByTaskId(taskId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private TaskWorkLogResponse toResponse(TaskWorkLog log) {
+        return TaskWorkLogResponse.builder()
+                .id(log.getId())
+                .taskId(log.getTask().getId())
+                .employeeId(log.getEmployee().getId())
+                .workDate(log.getWorkDate())
+                .hours(log.getHours())
+                .note(log.getNote())
+                .build();
     }
 }

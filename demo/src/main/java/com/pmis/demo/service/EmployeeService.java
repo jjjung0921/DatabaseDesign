@@ -2,6 +2,7 @@ package com.pmis.demo.service;
 
 import com.pmis.demo.domain.entity.Department;
 import com.pmis.demo.domain.entity.Employee;
+import com.pmis.demo.dto.EmployeeResponse;
 import com.pmis.demo.repository.DepartmentRepository;
 import com.pmis.demo.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,21 +24,24 @@ public class EmployeeService {
         return employeeRepository.save(employee);
     }
 
-    public List<Employee> getAll() {
-        return employeeRepository.findAll();
+    public List<EmployeeResponse> getAll() {
+        return employeeRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
     }
 
-    public Employee getById(Long id) {
-        return employeeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+    public EmployeeResponse getById(Long id) {
+        return toResponse(findEmployee(id));
     }
 
-    public List<Employee> getByDepartment(Long departmentId) {
-        return employeeRepository.findByDepartmentId(departmentId);
+    public List<EmployeeResponse> getByDepartment(Long departmentId) {
+        return employeeRepository.findByDepartmentId(departmentId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public Employee update(Long id, Long departmentId, Employee update) {
-        Employee emp = getById(id);
+        Employee emp = findEmployee(id);
 
         if (departmentId != null) {
             Department dept = departmentRepository.findById(departmentId)
@@ -50,5 +54,19 @@ public class EmployeeService {
 
     public void delete(Long id) {
         employeeRepository.deleteById(id);
+    }
+
+    private Employee findEmployee(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+    }
+
+    private EmployeeResponse toResponse(Employee employee) {
+        Long departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        return EmployeeResponse.builder()
+                .id(employee.getId())
+                .name(employee.getName())
+                .departmentId(departmentId)
+                .build();
     }
 }

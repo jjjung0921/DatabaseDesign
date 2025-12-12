@@ -3,6 +3,7 @@ package com.pmis.demo.service;
 import com.pmis.demo.domain.entity.Employee;
 import com.pmis.demo.domain.entity.Task;
 import com.pmis.demo.domain.entity.TaskComment;
+import com.pmis.demo.dto.TaskCommentResponse;
 import com.pmis.demo.repository.EmployeeRepository;
 import com.pmis.demo.repository.TaskCommentRepository;
 import com.pmis.demo.repository.TaskRepository;
@@ -35,7 +36,19 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public List<TaskComment> getComments(Long taskId) {
-        return commentRepository.findByTaskIdOrderByCommentedAtAsc(taskId);
+    public List<TaskCommentResponse> getComments(Long taskId) {
+        return commentRepository.findByTaskIdOrderByCommentedAtAsc(taskId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private TaskCommentResponse toResponse(TaskComment comment) {
+        return TaskCommentResponse.builder()
+                .id(comment.getId())
+                .taskId(comment.getTask().getId())
+                .employeeId(comment.getEmployee().getId())
+                .commentedAt(comment.getCommentedAt())
+                .content(comment.getContent())
+                .build();
     }
 }

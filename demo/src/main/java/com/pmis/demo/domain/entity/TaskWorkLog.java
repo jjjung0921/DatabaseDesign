@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "TaskWorkLog")
+@Table(name = "task_work_log")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class TaskWorkLog {

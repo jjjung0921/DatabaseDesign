@@ -1,6 +1,8 @@
 package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.TaskAssignment;
+import com.pmis.demo.dto.TaskAssignmentByEmployeeResponse;
+import com.pmis.demo.dto.TaskAssignmentByTaskResponse;
 import com.pmis.demo.service.TaskAssignmentService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +25,12 @@ public class TaskAssignmentController {
     }
 
     @GetMapping("/tasks/{taskId}/assignments")
-    public List<TaskAssignment> getByTask(@PathVariable Long taskId) {
+    public List<TaskAssignmentByTaskResponse> getByTask(@PathVariable Long taskId) {
         return assignmentService.getByTask(taskId);
     }
 
     @GetMapping("/employees/{employeeId}/assignments")
-    public List<TaskAssignment> getByEmployee(@PathVariable Long employeeId) {
+    public List<TaskAssignmentByEmployeeResponse> getByEmployee(@PathVariable Long employeeId) {
         return assignmentService.getByEmployee(employeeId);
     }
 

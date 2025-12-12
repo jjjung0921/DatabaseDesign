@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "ResourceAllocation")
+@Table(name = "resource_allocation")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 @IdClass(ResourceAllocationId.class)

@@ -3,6 +3,7 @@ package com.pmis.demo.controller;
 import com.pmis.demo.domain.entity.Task;
 import com.pmis.demo.domain.entity.TaskDependency;
 import com.pmis.demo.domain.enums.DependencyType;
+import com.pmis.demo.dto.TaskDependencyResponse;
 import com.pmis.demo.repository.TaskDependencyRepository;
 import com.pmis.demo.repository.TaskRepository;
 import lombok.Getter;
@@ -38,8 +39,15 @@ public class TaskDependencyController {
     }
 
     @GetMapping
-    public List<TaskDependency> getDependencies(@PathVariable Long taskId) {
-        return dependencyRepository.findBySuccessorId(taskId);
+    public List<TaskDependencyResponse> getDependencies(@PathVariable Long taskId) {
+        return dependencyRepository.findBySuccessorId(taskId).stream()
+                .map(dep -> TaskDependencyResponse.builder()
+                        .predecessorTaskId(dep.getPredecessor().getId())
+                        .successorTaskId(dep.getSuccessor().getId())
+                        .type(dep.getType())
+                        .lagDays(dep.getLagDays())
+                        .build())
+                .toList();
     }
 
     @DeleteMapping

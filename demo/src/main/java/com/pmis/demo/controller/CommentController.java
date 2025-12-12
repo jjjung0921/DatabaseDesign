@@ -1,6 +1,7 @@
 package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.TaskComment;
+import com.pmis.demo.dto.TaskCommentResponse;
 import com.pmis.demo.service.CommentService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class CommentController {
     }
 
     @GetMapping
-    public List<TaskComment> getComments(@PathVariable Long taskId) {
+    public List<TaskCommentResponse> getComments(@PathVariable Long taskId) {
         return commentService.getComments(taskId);
     }
 

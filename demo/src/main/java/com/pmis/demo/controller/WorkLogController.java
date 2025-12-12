@@ -1,6 +1,7 @@
 package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.TaskWorkLog;
+import com.pmis.demo.dto.TaskWorkLogResponse;
 import com.pmis.demo.dto.WorkLogRequest;
 import com.pmis.demo.service.WorkLogService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class WorkLogController {
     }
 
     @GetMapping
-    public List<TaskWorkLog> getLogs(@PathVariable Long taskId) {
+    public List<TaskWorkLogResponse> getLogs(@PathVariable Long taskId) {
         return workLogService.getTaskLogs(taskId);
     }
 }

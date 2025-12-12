@@ -1,6 +1,7 @@
 package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.Employee;
+import com.pmis.demo.dto.EmployeeResponse;
 import com.pmis.demo.service.EmployeeService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,17 +26,17 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public List<Employee> getAll() {
+    public List<EmployeeResponse> getAll() {
         return employeeService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Employee getOne(@PathVariable Long id) {
+    public EmployeeResponse getOne(@PathVariable Long id) {
         return employeeService.getById(id);
     }
 
     @GetMapping("/department/{departmentId}")
-    public List<Employee> getByDepartment(@PathVariable Long departmentId) {
+    public List<EmployeeResponse> getByDepartment(@PathVariable Long departmentId) {
         return employeeService.getByDepartment(departmentId);
     }
 

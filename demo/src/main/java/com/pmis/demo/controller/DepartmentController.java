@@ -1,6 +1,7 @@
 package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.Department;
+import com.pmis.demo.dto.DepartmentResponse;
 import com.pmis.demo.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +21,12 @@ public class DepartmentController {
     }
 
     @GetMapping
-    public List<Department> getAll() {
+    public List<DepartmentResponse> getAll() {
         return departmentService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Department getOne(@PathVariable Long id) {
+    public DepartmentResponse getOne(@PathVariable Long id) {
         return departmentService.getById(id);
     }
 

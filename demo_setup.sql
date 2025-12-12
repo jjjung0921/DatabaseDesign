@@ -1,40 +1,36 @@
--- ============================================================================
 -- PMIS 시연용 초기 데이터 세팅
--- ============================================================================
 USE pmis_db;
 
--- 기존 데이터 삭제 (순서 중요 - FK 제약조건 고려)
+-- 기존 데이터 삭제
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE AuditLog;
-TRUNCATE TABLE TaskDependency;
-TRUNCATE TABLE ResourceAllocation;
-TRUNCATE TABLE TaskAssignment;
-TRUNCATE TABLE TaskComment;
-TRUNCATE TABLE TaskWorkLog;
-TRUNCATE TABLE ProjectRisk;
-TRUNCATE TABLE ProjectMilestone;
-TRUNCATE TABLE Task;
-TRUNCATE TABLE ProjectDepartment;
-TRUNCATE TABLE Project;
-TRUNCATE TABLE Employee;
-TRUNCATE TABLE Department;
-TRUNCATE TABLE Role;
-TRUNCATE TABLE Resource;
+TRUNCATE TABLE audit_log;
+TRUNCATE TABLE task_dependency;
+TRUNCATE TABLE resource_allocation;
+TRUNCATE TABLE task_assignment;
+TRUNCATE TABLE task_comment;
+TRUNCATE TABLE task_work_log;
+TRUNCATE TABLE project_risk;
+TRUNCATE TABLE project_milestone;
+TRUNCATE TABLE task;
+TRUNCATE TABLE project_department;
+TRUNCATE TABLE project;
+TRUNCATE TABLE employee;
+TRUNCATE TABLE department;
+TRUNCATE TABLE role;
+TRUNCATE TABLE resource;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ============================================================================
+
 -- 1. 부서 (Department) 생성
--- ============================================================================
-INSERT INTO Department (id, name) VALUES
+INSERT INTO department (id, name) VALUES
 (1, '개발팀'),
 (2, '디자인팀'),
 (3, '마케팅팀'),
 (4, '경영지원팀');
 
--- ============================================================================
+
 -- 2. 역할 (Role) 생성
--- ============================================================================
-INSERT INTO Role (id, name) VALUES
+INSERT INTO role (id, name) VALUES
 (1, 'Department Head'),      -- 부서장 (읽기 권한)
 (2, 'Project Manager'),       -- 프로젝트 관리자 (전체 권한)
 (3, 'Lead'),                  -- 리드 (쓰기 권한)
@@ -43,32 +39,30 @@ INSERT INTO Role (id, name) VALUES
 (6, 'Assignee'),              -- 담당자 (쓰기 권한)
 (7, 'Viewer');                -- 뷰어 (읽기만)
 
--- ============================================================================
+
 -- 3. 직원 (Employee) 생성
--- ============================================================================
-INSERT INTO Employee (id, name, department_id) VALUES
+INSERT INTO employee (id, name, department_id) VALUES
 -- 개발팀 (1)
-(101, '김철수', 1),  -- 개발팀장 (Department Head)
+(101, '김철수', 1),  -- 개발 팀장 (Department Head)
 (102, '이영희', 1),  -- 시니어 개발자
 (103, '박민수', 1),  -- 주니어 개발자
 (104, '최지훈', 1),  -- 주니어 개발자
 
 -- 디자인팀 (2)
-(201, '정수진', 2),  -- 디자인팀장
+(201, '정수진', 2),  -- 디자인 팀장
 (202, '강민지', 2),  -- 시니어 디자이너
 (203, '윤서연', 2),  -- 주니어 디자이너
 
 -- 마케팅팀 (3)
-(301, '한동욱', 3),  -- 마케팅팀장
+(301, '한동욱', 3),  -- 마케팅 팀장
 (302, '송하늘', 3),  -- 마케팅 매니저
 
 -- 경영지원팀 (4)
 (401, '임재현', 4);  -- 경영지원팀장 (CEO 역할)
 
--- ============================================================================
+
 -- 4. 자원 (Resource) 생성
--- ============================================================================
-INSERT INTO Resource (id, name, type, quantity) VALUES
+INSERT INTO resource (id, name, type, quantity) VALUES
 (1, '개발 서버', 'EQUIPMENT', 5),
 (2, '회의실 A', 'ROOM', 1),
 (3, '회의실 B', 'ROOM', 1),
@@ -76,18 +70,16 @@ INSERT INTO Resource (id, name, type, quantity) VALUES
 (5, 'Figma 라이선스', 'LICENSE', 5),
 (6, '노트북', 'EQUIPMENT', 15);
 
--- ============================================================================
+
 -- 5. 프로젝트 (Project) 생성
--- ============================================================================
-INSERT INTO Project (id, name, start_date, end_date, status, manager_id) VALUES
+INSERT INTO project (id, name, start_date, end_date, status, manager_id) VALUES
 (1, '모바일 앱 개발 프로젝트', '2025-01-01', '2025-06-30', 'ONGOING', 102),  -- 이영희가 PM
 (2, '웹사이트 리뉴얼', '2025-02-01', '2025-04-30', 'ONGOING', 102),          -- 이영희가 PM
 (3, '신규 서비스 기획', '2025-03-01', '2025-12-31', 'PLANNED', 301);         -- 한동욱이 PM
 
--- ============================================================================
+
 -- 6. 프로젝트-부서 연결 (ProjectDepartment)
--- ============================================================================
-INSERT INTO ProjectDepartment (project_id, department_id) VALUES
+INSERT INTO project_department (project_id, department_id) VALUES
 -- 모바일 앱 개발 프로젝트: 개발팀 + 디자인팀
 (1, 1),
 (1, 2),
@@ -98,31 +90,29 @@ INSERT INTO ProjectDepartment (project_id, department_id) VALUES
 -- 신규 서비스 기획: 마케팅팀
 (3, 3);
 
--- ============================================================================
+
 -- 7. 업무 (Task) 생성
--- ============================================================================
-INSERT INTO Task (id, name, project_id, start_date, end_date, status, priority, estimated_hours) VALUES
--- 프로젝트 1: 모바일 앱 개발
+INSERT INTO task (id, name, project_id, start_date, end_date, status, priority, estimated_hours) VALUES
+-- 모바일 앱 개발(1)
 (1, 'UI/UX 디자인', 1, '2025-01-01', '2025-01-31', 'DONE', 'HIGH', 80.00),
 (2, '백엔드 API 개발', 1, '2025-02-01', '2025-03-31', 'DOING', 'CRITICAL', 160.00),
 (3, '프론트엔드 개발', 1, '2025-03-01', '2025-05-31', 'TODO', 'HIGH', 200.00),
 (4, 'QA 테스트', 1, '2025-05-01', '2025-06-15', 'TODO', 'NORMAL', 80.00),
 (5, '배포 및 운영', 1, '2025-06-15', '2025-06-30', 'TODO', 'CRITICAL', 40.00),
 
--- 프로젝트 2: 웹사이트 리뉴얼
+-- 웹사이트 리뉴얼(2)
 (6, '현황 분석 및 기획', 2, '2025-02-01', '2025-02-15', 'DONE', 'HIGH', 40.00),
 (7, '디자인 시안 작업', 2, '2025-02-16', '2025-03-15', 'DOING', 'HIGH', 80.00),
 (8, '웹 개발', 2, '2025-03-16', '2025-04-20', 'TODO', 'CRITICAL', 120.00),
 (9, 'SEO 최적화', 2, '2025-04-15', '2025-04-30', 'TODO', 'NORMAL', 30.00),
 
--- 프로젝트 3: 신규 서비스 기획
+-- 신규 서비스 기획(3)
 (10, '시장 조사', 3, '2025-03-01', '2025-04-30', 'TODO', 'HIGH', 100.00),
 (11, '사업 모델 수립', 3, '2025-05-01', '2025-06-30', 'TODO', 'CRITICAL', 80.00);
 
--- ============================================================================
+
 -- 8. 업무 배정 (TaskAssignment) - 권한 부여
--- ============================================================================
-INSERT INTO TaskAssignment (task_id, employee_id, role_id) VALUES
+INSERT INTO task_assignment (task_id, employee_id, role_id) VALUES
 -- Task 1: UI/UX 디자인 (완료됨)
 (1, 202, 3),  -- 강민지 (Lead)
 (1, 203, 5),  -- 윤서연 (Designer)
@@ -152,10 +142,9 @@ INSERT INTO TaskAssignment (task_id, employee_id, role_id) VALUES
 (10, 301, 3), -- 한동욱 (Lead) - PM
 (10, 302, 6); -- 송하늘 (Assignee)
 
--- ============================================================================
+
 -- 9. 업무 의존성 (TaskDependency)
--- ============================================================================
-INSERT INTO TaskDependency (predecessor_task_id, successor_task_id, type, lag_days) VALUES
+INSERT INTO task_dependency (predecessor_task_id, successor_task_id, type, lag_days) VALUES
 -- 모바일 앱: 디자인 완료 후 백엔드 시작
 (1, 2, 'FS', 0),
 -- 백엔드 완료 후 프론트엔드 시작
@@ -172,10 +161,9 @@ INSERT INTO TaskDependency (predecessor_task_id, successor_task_id, type, lag_da
 -- 개발과 SEO는 동시 진행 가능 (SS)
 (8, 9, 'SS', -5);
 
--- ============================================================================
+
 -- 10. 자원 할당 (ResourceAllocation)
--- ============================================================================
-INSERT INTO ResourceAllocation (task_id, resource_id, amount_used) VALUES
+INSERT INTO resource_allocation (task_id, resource_id, amount_used) VALUES
 -- Task 2: 백엔드 API 개발
 (2, 1, 2),  -- 개발 서버 2대
 (2, 2, 1),  -- 회의실 A
@@ -193,10 +181,9 @@ INSERT INTO ResourceAllocation (task_id, resource_id, amount_used) VALUES
 (8, 1, 2),  -- 개발 서버 2대
 (8, 4, 2);  -- IntelliJ 라이선스 2개
 
--- ============================================================================
+
 -- 11. 작업 로그 (TaskWorkLog)
--- ============================================================================
-INSERT INTO TaskWorkLog (task_id, employee_id, work_date, hours, note) VALUES
+INSERT INTO task_work_log (task_id, employee_id, work_date, hours, note) VALUES
 -- Task 1 완료 기록
 (1, 202, '2025-01-05', 8.00, '초기 와이어프레임 작성'),
 (1, 202, '2025-01-08', 8.00, '메인 화면 디자인'),
@@ -214,10 +201,9 @@ INSERT INTO TaskWorkLog (task_id, employee_id, work_date, hours, note) VALUES
 (7, 202, '2025-02-20', 8.00, '홈페이지 메인 디자인'),
 (7, 203, '2025-02-22', 7.00, '서브 페이지 레이아웃');
 
--- ============================================================================
+
 -- 12. 업무 댓글 (TaskComment)
--- ============================================================================
-INSERT INTO TaskComment (task_id, employee_id, commented_at, content) VALUES
+INSERT INTO task_comment (task_id, employee_id, commented_at, content) VALUES
 -- Task 2 댓글
 (2, 102, '2025-02-03 10:30:00', 'API 설계 문서 공유드립니다. 검토 부탁드립니다.'),
 (2, 103, '2025-02-03 14:20:00', '인증 부분은 JWT로 구현하겠습니다.'),
@@ -229,10 +215,9 @@ INSERT INTO TaskComment (task_id, employee_id, commented_at, content) VALUES
 (7, 202, '2025-02-20 14:00:00', '메인 디자인 시안 1차 완료. 피드백 주세요.'),
 (7, 203, '2025-02-22 10:30:00', '서브 페이지 레이아웃 초안 올렸습니다.');
 
--- ============================================================================
+
 -- 13. 마일스톤 (ProjectMilestone)
--- ============================================================================
-INSERT INTO ProjectMilestone (project_id, name, due_date, is_completed) VALUES
+INSERT INTO project_milestone (project_id, name, due_date, is_completed) VALUES
 -- 프로젝트 1: 모바일 앱
 (1, '디자인 완료', '2025-01-31', TRUE),
 (1, 'API 개발 완료', '2025-03-31', FALSE),
@@ -249,10 +234,9 @@ INSERT INTO ProjectMilestone (project_id, name, due_date, is_completed) VALUES
 (3, '시장 조사 완료', '2025-04-30', FALSE),
 (3, '사업 계획 수립', '2025-06-30', FALSE);
 
--- ============================================================================
+
 -- 14. 리스크 (ProjectRisk)
--- ============================================================================
-INSERT INTO ProjectRisk (project_id, title, description, level, status, owner_id, created_at, updated_at) VALUES
+INSERT INTO project_risk (project_id, title, description, level, status, owner_id, created_at, updated_at) VALUES
 (1, 'API 개발 일정 지연', 
     '백엔드 API 개발이 예상보다 복잡하여 일정이 2주 지연될 가능성 있음', 
     'HIGH', 'OPEN', 102, '2025-02-15 09:00:00', NULL),
@@ -269,37 +253,42 @@ INSERT INTO ProjectRisk (project_id, title, description, level, status, owner_id
     'SEO 전문가가 없어 외부 컨설팅 필요할 수 있음', 
     'LOW', 'OPEN', 302, '2025-02-20 11:00:00', NULL);
 
--- ============================================================================
+
+-- 15. 감사 로그 (AuditLog)
+INSERT INTO audit_log (table_name, record_id, action, employee_id, old_value, new_value, changed_at, ip_address) VALUES
+('Task', 2, 'UPDATE', 102, '{"status":"TODO"}', '{"status":"DOING"}', '2025-02-03 18:00:00', '127.0.0.1'),
+('TaskWorkLog', 5, 'INSERT', 103, NULL, '{"taskId":2,"hours":7.5}', '2025-02-05 18:00:00', '127.0.0.1'),
+('TaskComment', 7, 'INSERT', 202, NULL, '{"taskId":7,"comment":"메인 디자인 완료"}', '2025-02-20 14:05:00', '127.0.0.1');
+
 -- 완료 메시지
--- ============================================================================
 SELECT '===================================' as '';
 SELECT '시연용 데이터 세팅 완료!' as 'Status';
 SELECT '===================================' as '';
 
 -- 생성된 데이터 요약
-SELECT '부서' as 'Category', COUNT(*) as 'Count' FROM Department
+SELECT '부서' as 'Category', COUNT(*) as 'Count' FROM department
 UNION ALL
-SELECT '직원', COUNT(*) FROM Employee
+SELECT '직원', COUNT(*) FROM employee
 UNION ALL
-SELECT '역할', COUNT(*) FROM Role
+SELECT '역할', COUNT(*) FROM role
 UNION ALL
-SELECT '프로젝트', COUNT(*) FROM Project
+SELECT '프로젝트', COUNT(*) FROM project
 UNION ALL
-SELECT '업무', COUNT(*) FROM Task
+SELECT '업무', COUNT(*) FROM task
 UNION ALL
-SELECT '업무 배정', COUNT(*) FROM TaskAssignment
+SELECT '업무 배정', COUNT(*) FROM task_assignment
 UNION ALL
-SELECT '자원', COUNT(*) FROM Resource
+SELECT '자원', COUNT(*) FROM resource
 UNION ALL
-SELECT '자원 할당', COUNT(*) FROM ResourceAllocation
+SELECT '자원 할당', COUNT(*) FROM resource_allocation
 UNION ALL
-SELECT '작업 로그', COUNT(*) FROM TaskWorkLog
+SELECT '작업 로그', COUNT(*) FROM task_work_log
 UNION ALL
-SELECT '댓글', COUNT(*) FROM TaskComment
+SELECT '댓글', COUNT(*) FROM task_comment
 UNION ALL
-SELECT '마일스톤', COUNT(*) FROM ProjectMilestone
+SELECT '마일스톤', COUNT(*) FROM project_milestone
 UNION ALL
-SELECT '리스크', COUNT(*) FROM ProjectRisk;
+SELECT '리스크', COUNT(*) FROM project_risk;
 
 SELECT '' as '';
 SELECT '주요 테스트 계정:' as 'Info';

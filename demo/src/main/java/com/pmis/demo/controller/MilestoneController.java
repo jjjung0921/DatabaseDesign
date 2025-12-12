@@ -1,6 +1,7 @@
 package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.ProjectMilestone;
+import com.pmis.demo.dto.ProjectMilestoneResponse;
 import com.pmis.demo.service.MilestoneService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +20,21 @@ public class MilestoneController {
 
     @PostMapping
     public ProjectMilestone create(@PathVariable Long projectId,
+                                   @RequestParam Long employeeId,
                                    @RequestBody MilestoneCreateRequest request) {
-        return milestoneService.createMilestone(projectId, request.getName(), request.getDueDate());
+        return milestoneService.createMilestone(projectId, employeeId, request.getName(), request.getDueDate());
     }
 
     @GetMapping
-    public List<ProjectMilestone> getAll(@PathVariable Long projectId) {
+    public List<ProjectMilestoneResponse> getAll(@PathVariable Long projectId) {
         return milestoneService.getMilestones(projectId);
     }
 
     @PatchMapping("/{milestoneId}/complete")
     public ProjectMilestone complete(@PathVariable Long projectId,
-                                     @PathVariable Long milestoneId) {
-        return milestoneService.completeMilestone(milestoneId);
+                                     @PathVariable Long milestoneId,
+                                     @RequestParam Long employeeId) {
+        return milestoneService.completeMilestone(projectId, milestoneId, employeeId);
     }
 
     @Getter @Setter

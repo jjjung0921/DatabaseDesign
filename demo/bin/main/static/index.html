@@ -236,6 +236,8 @@
     <input type="text" id="projNewStatus"><br>
     <label>새 관리자 직원 ID:</label>
     <input type="number" id="projNewManagerId"><br>
+    <label>수정 요청자 직원 ID:</label>
+    <input type="number" id="projEditorId"><br>
     <button onclick="updateProject()">PUT /api/projects/{id}</button>
     <br><br>
     <label>상태 변경용 상태:</label>
@@ -251,6 +253,8 @@
     <input type="number" id="projDeptProjId"><br>
     <label>부서 ID:</label>
     <input type="number" id="projDeptDeptId"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="projDeptEmployeeId"><br>
     <button onclick="addProjectDepartment()">POST /api/projects/{id}/departments/{departmentId}</button>
   </fieldset>
 </div>
@@ -274,6 +278,8 @@
     <input type="text" id="taskStatus" value="TODO"><br>
     <label>우선순위(LOW/NORMAL/HIGH/CRITICAL):</label>
     <input type="text" id="taskPriority" value="NORMAL"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="taskEditorId"><br>
     <button onclick="createTask()">POST /api/projects/{projectId}/tasks</button>
   </fieldset>
 
@@ -289,12 +295,16 @@
     <input type="number" id="taskIdForStatus"><br>
     <label>새 상태:</label>
     <input type="text" id="taskStatusOnly" value="DOING"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="taskEditorIdForStatus"><br>
     <button onclick="updateTaskStatus()">PATCH /{projectId}/tasks/{taskId}/status</button>
     <br><br>
     <label>업무 ID(삭제용):</label>
     <input type="number" id="taskIdToDelete"><br>
     <label>프로젝트 ID:</label>
     <input type="number" id="taskProjForDeleteId"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="taskEditorIdForDelete"><br>
     <button onclick="deleteTask()">DELETE /api/projects/{projectId}/tasks/{taskId}</button>
   </fieldset>
 </div>
@@ -478,6 +488,8 @@
     <input type="text" id="msName"><br>
     <label>기한(YYYY-MM-DD):</label>
     <input type="text" id="msDueDate"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="msEditorId"><br>
     <button onclick="createMilestone()">POST /api/projects/{projectId}/milestones</button>
   </fieldset>
 
@@ -491,6 +503,8 @@
     <input type="number" id="msProjIdForComplete"><br>
     <label>마일스톤 ID:</label>
     <input type="number" id="msIdForComplete"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="msEditorIdForComplete"><br>
     <button onclick="completeMilestone()">PATCH /{projectId}/milestones/{milestoneId}/complete</button>
   </fieldset>
 </div>
@@ -512,6 +526,8 @@
     <input type="text" id="riskDesc"><br>
     <label>레벨(LOW/MEDIUM/HIGH/CRITICAL):</label>
     <input type="text" id="riskLevel" value="HIGH"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="riskEditorId"><br>
     <button onclick="createRisk()">POST /api/projects/{projectId}/risks</button>
   </fieldset>
 
@@ -527,6 +543,8 @@
     <input type="number" id="riskIdForStatus"><br>
     <label>새 상태(OPEN/MITIGATED/CLOSED):</label>
     <input type="text" id="riskStatus" value="MITIGATED"><br>
+    <label>요청자 직원 ID:</label>
+    <input type="number" id="riskEditorIdForStatus"><br>
     <button onclick="updateRiskStatus()">PATCH /{projectId}/risks/{riskId}/status</button>
   </fieldset>
 </div>
@@ -707,7 +725,9 @@
     const status = document.getElementById('projNewStatus').value || null;
     const managerId = document.getElementById('projNewManagerId').value
       ? Number(document.getElementById('projNewManagerId').value) : null;
-    sendRequest(`/api/projects/${id}`, {
+    const editorId = document.getElementById('projEditorId').value;
+    const employeeQuery = editorId ? `?employeeId=${encodeURIComponent(editorId)}` : '';
+    sendRequest(`/api/projects/${id}${employeeQuery}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, startDate, endDate, status, managerId })
@@ -716,18 +736,26 @@
   function updateProjectStatus() {
     const id = document.getElementById('projUpdateId').value;
     const status = document.getElementById('projStatusOnly').value;
-    sendRequest(`/api/projects/${id}/status?status=${encodeURIComponent(status)}`, {
+    const editorId = document.getElementById('projEditorId').value;
+    const queryParts = [`status=${encodeURIComponent(status)}`];
+    if (editorId) queryParts.push(`employeeId=${encodeURIComponent(editorId)}`);
+    const query = queryParts.length ? `?${queryParts.join('&')}` : '';
+    sendRequest(`/api/projects/${id}/status${query}`, {
       method: 'PATCH'
     }, 'Update Project Status', 'out-proj');
   }
   function deleteProject() {
     const id = document.getElementById('projUpdateId').value;
-    sendRequest(`/api/projects/${id}`, { method: 'DELETE' }, 'Delete Project', 'out-proj');
+    const editorId = document.getElementById('projEditorId').value;
+    const employeeQuery = editorId ? `?employeeId=${encodeURIComponent(editorId)}` : '';
+    sendRequest(`/api/projects/${id}${employeeQuery}`, { method: 'DELETE' }, 'Delete Project', 'out-proj');
   }
   function addProjectDepartment() {
     const projId = document.getElementById('projDeptProjId').value;
     const deptId = document.getElementById('projDeptDeptId').value;
-    sendRequest(`/api/projects/${projId}/departments/${deptId}`, {
+    const employeeId = document.getElementById('projDeptEmployeeId').value;
+    const employeeQuery = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : '';
+    sendRequest(`/api/projects/${projId}/departments/${deptId}${employeeQuery}`, {
       method: 'POST'
     }, 'Add Project Department', 'out-proj');
   }
@@ -740,7 +768,9 @@
     const endDate = document.getElementById('taskEnd').value || null;
     const status = document.getElementById('taskStatus').value;
     const priority = document.getElementById('taskPriority').value;
-    sendRequest(`/api/projects/${projectId}/tasks`, {
+    const employeeId = document.getElementById('taskEditorId').value;
+    const employeeQuery = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : '';
+    sendRequest(`/api/projects/${projectId}/tasks${employeeQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, startDate, endDate, status, priority })
@@ -754,14 +784,20 @@
     const projectId = document.getElementById('taskProjForStatusId').value;
     const taskId = document.getElementById('taskIdForStatus').value;
     const status = document.getElementById('taskStatusOnly').value;
-    sendRequest(`/api/projects/${projectId}/tasks/${taskId}/status?status=${encodeURIComponent(status)}`, {
+    const employeeId = document.getElementById('taskEditorIdForStatus').value;
+    const queryParts = [`status=${encodeURIComponent(status)}`];
+    if (employeeId) queryParts.push(`employeeId=${encodeURIComponent(employeeId)}`);
+    const query = queryParts.length ? `?${queryParts.join('&')}` : '';
+    sendRequest(`/api/projects/${projectId}/tasks/${taskId}/status${query}`, {
       method: 'PATCH'
     }, 'Update Task Status', 'out-task');
   }
   function deleteTask() {
     const projectId = document.getElementById('taskProjForDeleteId').value;
     const taskId = document.getElementById('taskIdToDelete').value;
-    sendRequest(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' }, 'Delete Task', 'out-task');
+    const employeeId = document.getElementById('taskEditorIdForDelete').value;
+    const employeeQuery = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : '';
+    sendRequest(`/api/projects/${projectId}/tasks/${taskId}${employeeQuery}`, { method: 'DELETE' }, 'Delete Task', 'out-task');
   }
 
   // Task Assignment
@@ -901,7 +937,9 @@
     const projectId = document.getElementById('msProjId').value;
     const name = document.getElementById('msName').value;
     const dueDate = document.getElementById('msDueDate').value;
-    sendRequest(`/api/projects/${projectId}/milestones`, {
+    const employeeId = document.getElementById('msEditorId').value;
+    const employeeQuery = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : '';
+    sendRequest(`/api/projects/${projectId}/milestones${employeeQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, dueDate })
@@ -914,7 +952,9 @@
   function completeMilestone() {
     const projectId = document.getElementById('msProjIdForComplete').value;
     const milestoneId = document.getElementById('msIdForComplete').value;
-    sendRequest(`/api/projects/${projectId}/milestones/${milestoneId}/complete`, {
+    const employeeId = document.getElementById('msEditorIdForComplete').value;
+    const employeeQuery = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : '';
+    sendRequest(`/api/projects/${projectId}/milestones/${milestoneId}/complete${employeeQuery}`, {
       method: 'PATCH'
     }, 'Complete Milestone', 'out-ms');
   }
@@ -927,7 +967,9 @@
     const title = document.getElementById('riskTitle').value;
     const description = document.getElementById('riskDesc').value;
     const level = document.getElementById('riskLevel').value;
-    sendRequest(`/api/projects/${projectId}/risks`, {
+    const employeeId = document.getElementById('riskEditorId').value;
+    const employeeQuery = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : '';
+    sendRequest(`/api/projects/${projectId}/risks${employeeQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ownerId, title, description, level })
@@ -941,7 +983,11 @@
     const projectId = document.getElementById('riskProjIdForStatus').value;
     const riskId = document.getElementById('riskIdForStatus').value;
     const status = document.getElementById('riskStatus').value;
-    sendRequest(`/api/projects/${projectId}/risks/${riskId}/status?status=${encodeURIComponent(status)}`, {
+    const employeeId = document.getElementById('riskEditorIdForStatus').value;
+    const queryParts = [`status=${encodeURIComponent(status)}`];
+    if (employeeId) queryParts.push(`employeeId=${encodeURIComponent(employeeId)}`);
+    const query = queryParts.length ? `?${queryParts.join('&')}` : '';
+    sendRequest(`/api/projects/${projectId}/risks/${riskId}/status${query}`, {
       method: 'PATCH'
     }, 'Update Risk Status', 'out-risk');
   }

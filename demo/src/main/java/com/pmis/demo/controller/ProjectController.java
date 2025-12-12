@@ -2,6 +2,7 @@ package com.pmis.demo.controller;
 
 import com.pmis.demo.domain.entity.Project;
 import com.pmis.demo.domain.enums.ProjectStatus;
+import com.pmis.demo.dto.ProjectResponse;
 import com.pmis.demo.service.ProjectService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -30,17 +31,18 @@ public class ProjectController {
     }
 
     @GetMapping
-    public List<Project> getAll() {
+    public List<ProjectResponse> getAll() {
         return projectService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Project getOne(@PathVariable Long id) {
+    public ProjectResponse getOne(@PathVariable Long id) {
         return projectService.getById(id);
     }
 
     @PutMapping("/{id}")
     public Project update(@PathVariable Long id,
+                          @RequestParam Long employeeId,
                           @RequestBody ProjectUpdateRequest request) {
         Project project = Project.builder()
                 .name(request.getName())
@@ -48,24 +50,27 @@ public class ProjectController {
                 .endDate(request.getEndDate())
                 .status(request.getStatus())
                 .build();
-        return projectService.update(id, request.getManagerId(), project);
+        return projectService.update(id, employeeId, request.getManagerId(), project);
     }
 
     @PatchMapping("/{id}/status")
     public Project updateStatus(@PathVariable Long id,
-                                @RequestParam ProjectStatus status) {
-        return projectService.updateStatus(id, status);
+                                @RequestParam ProjectStatus status,
+                                @RequestParam Long employeeId) {
+        return projectService.updateStatus(id, employeeId, status);
     }
 
     @PostMapping("/{id}/departments/{departmentId}")
     public void addDepartment(@PathVariable Long id,
-                              @PathVariable Long departmentId) {
-        projectService.addDepartment(id, departmentId);
+                              @PathVariable Long departmentId,
+                              @RequestParam Long employeeId) {
+        projectService.addDepartment(id, departmentId, employeeId);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        projectService.delete(id);
+    public void delete(@PathVariable Long id,
+                       @RequestParam Long employeeId) {
+        projectService.delete(id, employeeId);
     }
 
     @Getter @Setter
