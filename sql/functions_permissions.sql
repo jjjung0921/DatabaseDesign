@@ -1,194 +1,4 @@
-CREATE DATABASE IF NOT EXISTS pmis_db;
 USE pmis_db;
-
--- Base tables
-CREATE TABLE IF NOT EXISTS department (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS role (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    can_read TINYINT(1) NOT NULL DEFAULT 1,
-    can_write TINYINT(1) NOT NULL DEFAULT 0,
-    can_delete TINYINT(1) NOT NULL DEFAULT 0
-);
-
-INSERT IGNORE INTO role (name, can_read, can_write, can_delete) VALUES
-('ADMIN', 1, 1, 1),
-('MANAGER', 1, 1, 0),
-('MEMBER', 1, 1, 0),
-('VIEWER', 1, 0, 0);
-
-CREATE TABLE IF NOT EXISTS resource (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    type ENUM('EQUIPMENT', 'ROOM', 'LICENSE', 'MATERIAL', 'OTHER') NOT NULL,
-    quantity INT NOT NULL
-);
-
--- Tables which reference base tables
-CREATE TABLE IF NOT EXISTS employee (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    department_id INT NOT NULL,
-    FOREIGN KEY (department_id) REFERENCES department(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS project (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    start_date DATE,
-    end_date DATE,
-    status ENUM('PLANNED', 'ONGOING', 'DONE') NOT NULL,
-    manager_id INT NOT NULL,
-    FOREIGN KEY (manager_id) REFERENCES employee(id) ON DELETE RESTRICT
-);
-
--- Tables which reference Project or others
-CREATE TABLE IF NOT EXISTS task (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    project_id INT NOT NULL,
-    start_date DATE,
-    end_date DATE,
-    status ENUM('TODO', 'DOING', 'DONE') NOT NULL,
-    priority ENUM('LOW', 'NORMAL', 'HIGH', 'CRITICAL') NOT NULL DEFAULT 'NORMAL',
-    estimated_hours DECIMAL(5,2),
-    FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS project_milestone (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    project_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    due_date DATE NOT NULL,
-    is_completed BOOLEAN NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS project_risk (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    project_id INT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    level ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
-    status VARCHAR(50) NOT NULL,  -- 'ONGOING', 'MITIGATED', 'CLOSED'
-    owner_id INT,
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME,
-    FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE,
-    FOREIGN KEY (owner_id) REFERENCES employee(id) ON DELETE SET NULL
-);
-
-CREATE TABLE IF NOT EXISTS task_work_log (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    task_id INT NOT NULL,
-    employee_id INT NOT NULL,
-    work_date DATE NOT NULL,
-    hours DECIMAL(5,2) NOT NULL,
-    note TEXT,
-    FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE CASCADE,
-    FOREIGN KEY (employee_id) REFERENCES employee(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS task_comment (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    task_id INT NOT NULL,
-    employee_id INT NOT NULL,
-    commented_at DATETIME NOT NULL,
-    content TEXT NOT NULL,
-    FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE CASCADE,
-    FOREIGN KEY (employee_id) REFERENCES employee(id) ON DELETE CASCADE
-);
-
--- Relationship tables
-CREATE TABLE IF NOT EXISTS project_department (
-    project_id INT NOT NULL,
-    department_id INT NOT NULL,
-    PRIMARY KEY (project_id, department_id),
-    FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE,
-    FOREIGN KEY (department_id) REFERENCES department(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS task_assignment (
-    task_id INT NOT NULL,
-    employee_id INT NOT NULL,
-    role_id INT NOT NULL,
-    PRIMARY KEY (task_id, employee_id, role_id),
-    FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE CASCADE,
-    FOREIGN KEY (employee_id) REFERENCES employee(id) ON DELETE CASCADE,
-    FOREIGN KEY (role_id) REFERENCES role(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS resource_allocation (
-    task_id INT NOT NULL,
-    resource_id INT NOT NULL,
-    amount_used INT NOT NULL,
-    PRIMARY KEY (task_id, resource_id),
-    FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE CASCADE,
-    FOREIGN KEY (resource_id) REFERENCES resource(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS task_dependency (
-    predecessor_task_id INT NOT NULL,
-    successor_task_id INT NOT NULL,
-    type ENUM('FS', 'SS', 'FF', 'SF') NOT NULL,
-    lag_days INT,
-    PRIMARY KEY (predecessor_task_id, successor_task_id),
-    FOREIGN KEY (predecessor_task_id) REFERENCES task(id) ON DELETE CASCADE,
-    FOREIGN KEY (successor_task_id) REFERENCES task(id) ON DELETE CASCADE
-);
-
--- 감사 로그 테이블 (Audit Log)
-CREATE TABLE IF NOT EXISTS audit_log (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    table_name VARCHAR(50) NOT NULL,
-    record_id INT NOT NULL,
-    action ENUM('INSERT', 'UPDATE', 'DELETE') NOT NULL,
-    employee_id INT,
-    old_value TEXT,
-    new_value TEXT,
-    changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ip_address VARCHAR(45),
-    FOREIGN KEY (employee_id) REFERENCES employee(id) ON DELETE SET NULL,
-    INDEX idx_audit_table_record (table_name, record_id),
-    INDEX idx_audit_employee (employee_id),
-    INDEX idx_audit_timestamp (changed_at)
-);
-
--- Indexes
-CREATE INDEX idx_project_status ON project(status);
-CREATE INDEX idx_project_manager_id ON project(manager_id);
-
-CREATE INDEX idx_task_project_id ON task(project_id);
-CREATE INDEX idx_task_status ON task(status);
-CREATE INDEX idx_task_priority ON task(priority);
-
-CREATE INDEX idx_employee_department_id ON employee(department_id);
-
-CREATE INDEX idx_milestone_project_due ON project_milestone(project_id, due_date);
-
-CREATE INDEX idx_risk_project_id ON project_risk(project_id);
-CREATE INDEX idx_risk_level ON project_risk(level);
-CREATE INDEX idx_risk_status ON project_risk(status);
-CREATE INDEX idx_risk_owner_id ON project_risk(owner_id);
-
-CREATE INDEX idx_worklog_task_id ON task_work_log(task_id);
-CREATE INDEX idx_worklog_employee_date ON task_work_log(employee_id, work_date);
-
-CREATE INDEX idx_comment_task_id ON task_comment(task_id);
-CREATE INDEX idx_comment_employee_time ON task_comment(employee_id, commented_at);
-
-CREATE INDEX idx_taskdep_successor ON task_dependency(successor_task_id);
-
-CREATE INDEX idx_resalloc_resource_id ON resource_allocation(resource_id);
-
-CREATE INDEX idx_taskassign_employee_id ON task_assignment(employee_id);
-CREATE INDEX idx_taskassign_role_id ON task_assignment(role_id);
-
-CREATE INDEX idx_projdept_department_id ON project_department(department_id);
 
 -- Role 유효성/권한 헬퍼
 DELIMITER $$
@@ -257,7 +67,6 @@ END$$
 DELIMITER $$
 
 -- Task 조회 권한 체크 함수
--- 반환값: 1 = 권한 있음, 0 = 권한 없음, -1 = 에러
 CREATE FUNCTION IF NOT EXISTS check_task_read_permission(
     p_task_id INT,
     p_employee_id INT
@@ -271,24 +80,20 @@ BEGIN
     DECLARE task_exists INT DEFAULT 0;
     DECLARE employee_exists INT DEFAULT 0;
     
-    -- NULL 체크
     IF p_task_id IS NULL OR p_employee_id IS NULL THEN
         RETURN -1;
     END IF;
     
-    -- Task 존재 여부 확인
     SELECT COUNT(*) INTO task_exists FROM task WHERE id = p_task_id;
     IF task_exists = 0 THEN
         RETURN -1;
     END IF;
     
-    -- Employee 존재 여부 확인
     SELECT COUNT(*) INTO employee_exists FROM employee WHERE id = p_employee_id;
     IF employee_exists = 0 THEN
         RETURN -1;
     END IF;
     
-    -- 1. 해당 Task에 직접 배정되고 읽기 권한이 있는 Role인지 확인
     IF EXISTS (
         SELECT 1
         FROM task_assignment ta
@@ -301,7 +106,6 @@ BEGIN
         RETURN has_permission;
     END IF;
     
-    -- 2. 프로젝트 관리자인지 확인 (매니저는 항상 읽기 가능)
     SELECT p.manager_id INTO project_manager_id
     FROM task t
     JOIN project p ON t.project_id = p.id
@@ -315,7 +119,6 @@ BEGIN
 END$$
 
 -- Task 수정 권한 체크 함수
--- 반환값: 1 = 권한 있음, 0 = 권한 없음, -1 = 에러
 CREATE FUNCTION IF NOT EXISTS check_task_write_permission(
     p_task_id INT,
     p_employee_id INT
@@ -329,24 +132,20 @@ BEGIN
     DECLARE task_exists INT DEFAULT 0;
     DECLARE employee_exists INT DEFAULT 0;
     
-    -- NULL 체크
     IF p_task_id IS NULL OR p_employee_id IS NULL THEN
         RETURN -1;
     END IF;
     
-    -- Task 존재 여부 확인
     SELECT COUNT(*) INTO task_exists FROM task WHERE id = p_task_id;
     IF task_exists = 0 THEN
         RETURN -1;
     END IF;
     
-    -- Employee 존재 여부 확인
     SELECT COUNT(*) INTO employee_exists FROM employee WHERE id = p_employee_id;
     IF employee_exists = 0 THEN
         RETURN -1;
     END IF;
     
-    -- 1. 해당 Task에 쓰기 권한이 있는 Role로 배정된 직원인지 확인
     IF EXISTS (
         SELECT 1 FROM task_assignment ta
         JOIN role r ON ta.role_id = r.id
@@ -358,7 +157,6 @@ BEGIN
         RETURN has_permission;
     END IF;
     
-    -- 2. 프로젝트 관리자인지 확인
     SELECT p.manager_id INTO project_manager_id
     FROM task t
     JOIN project p ON t.project_id = p.id
@@ -373,7 +171,6 @@ BEGIN
 END$$
 
 -- Project 수정 권한 체크 함수 (프로젝트 매니저만 허용)
--- 반환값: 1 = 권한 있음, 0 = 권한 없음, -1 = 에러/존재하지 않음
 CREATE FUNCTION IF NOT EXISTS check_project_write_permission(
     p_project_id INT,
     p_employee_id INT
@@ -387,24 +184,20 @@ BEGIN
     DECLARE employee_exists INT DEFAULT 0;
     DECLARE manager_id INT DEFAULT NULL;
     
-    -- NULL 체크
     IF p_project_id IS NULL OR p_employee_id IS NULL THEN
         RETURN -1;
     END IF;
     
-    -- Project 존재 여부 확인
     SELECT COUNT(*) INTO project_exists FROM project WHERE id = p_project_id;
     IF project_exists = 0 THEN
         RETURN -1;
     END IF;
     
-    -- Employee 존재 여부 확인
     SELECT COUNT(*) INTO employee_exists FROM employee WHERE id = p_employee_id;
     IF employee_exists = 0 THEN
         RETURN -1;
     END IF;
     
-    -- 프로젝트 매니저인지 확인
     SELECT manager_id INTO manager_id FROM project WHERE id = p_project_id;
     IF manager_id IS NOT NULL AND manager_id = p_employee_id THEN
         SET has_permission = 1;
@@ -414,7 +207,6 @@ BEGIN
 END$$
 
 -- Milestone/Task/Risk 등 프로젝트 하위 리소스 수정 시 PM 여부 확인
--- 반환값: 1 = 권한 있음(프로젝트 매니저), 0 = 권한 없음, -1 = 에러/존재하지 않음
 CREATE FUNCTION IF NOT EXISTS check_project_child_write_permission(
     p_project_id INT,
     p_employee_id INT
@@ -456,7 +248,6 @@ DELIMITER ;
 
 DELIMITER $$
 
--- Task INSERT 트리거
 CREATE TRIGGER IF NOT EXISTS task_after_insert
 AFTER INSERT ON task
 FOR EACH ROW
@@ -472,14 +263,12 @@ BEGIN
     );
 END$$
 
--- Task UPDATE 트리거
 CREATE TRIGGER IF NOT EXISTS task_after_update
 AFTER UPDATE ON task
 FOR EACH ROW
 BEGIN
     DECLARE changes TEXT DEFAULT '';
     
-    -- NULL safe
     IF (OLD.name IS NULL AND NEW.name IS NOT NULL) OR 
        (OLD.name IS NOT NULL AND NEW.name IS NULL) OR 
        (OLD.name IS NOT NULL AND NEW.name IS NOT NULL AND OLD.name != NEW.name) THEN
@@ -524,7 +313,6 @@ BEGIN
     END IF;
 END$$
 
--- Task DELETE 트리거
 CREATE TRIGGER IF NOT EXISTS task_after_delete
 AFTER DELETE ON task
 FOR EACH ROW
@@ -540,7 +328,6 @@ BEGIN
     );
 END$$
 
--- TaskAssignment INSERT 트리거 (권한 부여 감사)
 CREATE TRIGGER IF NOT EXISTS task_assignment_after_insert
 AFTER INSERT ON task_assignment
 FOR EACH ROW
@@ -557,7 +344,6 @@ BEGIN
     );
 END$$
 
--- TaskAssignment DELETE 트리거 (권한 제거 감사)
 CREATE TRIGGER IF NOT EXISTS task_assignment_after_delete
 AFTER DELETE ON task_assignment
 FOR EACH ROW
@@ -630,8 +416,6 @@ END$$
 DELIMITER ;
 
 -- 권한 기반 조회 VIEW
-
--- 직원이 접근 가능한 Task 목록 VIEW
 CREATE OR REPLACE VIEW accessible_tasks AS
 SELECT DISTINCT
     t.*,
@@ -650,7 +434,6 @@ WHERE ta.employee_id IS NOT NULL OR p.manager_id = ta.employee_id;
 
 DELIMITER $$
 
--- Project 수정 프로시저 (프로젝트 매니저만 수정 가능)
 CREATE PROCEDURE IF NOT EXISTS update_project_with_permission(
     IN p_project_id INT,
     IN p_employee_id INT,
@@ -671,12 +454,10 @@ BEGIN
     
     START TRANSACTION;
     
-    -- NULL 체크
     IF p_project_id IS NULL OR p_employee_id IS NULL THEN
         SELECT 'INVALID_INPUT' as result, 'Project ID and Employee ID cannot be NULL' as message;
         ROLLBACK;
     ELSE
-        -- Status 유효성 검사
         IF p_new_status IS NOT NULL AND p_new_status NOT IN ('PLANNED', 'ONGOING', 'DONE') THEN
             SET valid_status = 0;
         END IF;
@@ -709,7 +490,6 @@ BEGIN
     END IF;
 END$$
 
--- Milestone 생성/완료 (프로젝트 매니저만 허용)
 CREATE PROCEDURE IF NOT EXISTS create_milestone_with_permission(
     IN p_project_id INT,
     IN p_employee_id INT,
@@ -779,7 +559,6 @@ BEGIN
     END IF;
 END$$
 
--- Risk 생성/상태 변경 (프로젝트 매니저만 허용)
 CREATE PROCEDURE IF NOT EXISTS create_risk_with_permission(
     IN p_project_id INT,
     IN p_employee_id INT,
@@ -851,7 +630,6 @@ BEGIN
     END IF;
 END$$
 
--- Task Dependency 생성/삭제 (프로젝트 매니저만 허용)
 CREATE PROCEDURE IF NOT EXISTS create_task_dependency_with_permission(
     IN p_predecessor_task_id INT,
     IN p_successor_task_id INT,
@@ -946,7 +724,6 @@ BEGIN
     END IF;
 END$$
 
--- Task Assignment 추가/삭제 (프로젝트 매니저만 허용)
 CREATE PROCEDURE IF NOT EXISTS create_task_assignment_with_permission(
     IN p_task_id INT,
     IN p_employee_id_to_assign INT,
@@ -1030,7 +807,6 @@ BEGIN
     END IF;
 END$$
 
--- Task 조회 프로시저 (권한 체크 포함)
 CREATE PROCEDURE IF NOT EXISTS get_task_with_permission(
     IN p_task_id INT,
     IN p_employee_id INT
@@ -1043,7 +819,6 @@ BEGIN
         ROLLBACK;
     END;
     
-    -- NULL 체크
     IF p_task_id IS NULL OR p_employee_id IS NULL THEN
         SELECT NULL as id, 'INVALID_INPUT' as access_status, 'Task ID and Employee ID cannot be NULL' as message;
     ELSE
@@ -1061,7 +836,6 @@ BEGIN
     END IF;
 END$$
 
--- Task 수정 프로시저 (권한 체크 포함)
 CREATE PROCEDURE IF NOT EXISTS update_task_with_permission(
     IN p_task_id INT,
     IN p_employee_id INT,
@@ -1082,17 +856,14 @@ BEGIN
     
     START TRANSACTION;
     
-    -- NULL 체크
     IF p_task_id IS NULL OR p_employee_id IS NULL THEN
         SELECT 'INVALID_INPUT' as result, 'Task ID and Employee ID cannot be NULL' as message;
         ROLLBACK;
     ELSE
-        -- Status 유효성 검사
         IF p_new_status IS NOT NULL AND p_new_status NOT IN ('TODO', 'DOING', 'DONE') THEN
             SET valid_status = 0;
         END IF;
         
-        -- Priority 유효성 검사
         IF p_new_priority IS NOT NULL AND p_new_priority NOT IN ('LOW', 'NORMAL', 'HIGH', 'CRITICAL') THEN
             SET valid_priority = 0;
         END IF;
@@ -1128,7 +899,6 @@ BEGIN
     END IF;
 END$$
 
--- 직원이 접근 가능한 모든 Task 조회 프로시저
 CREATE PROCEDURE IF NOT EXISTS get_employee_accessible_tasks(
     IN p_employee_id INT
 )
@@ -1140,11 +910,9 @@ BEGIN
         SELECT 'ERROR' as result, 'Database error occurred' as message;
     END;
     
-    -- NULL 체크
     IF p_employee_id IS NULL THEN
         SELECT 'INVALID_INPUT' as result, 'Employee ID cannot be NULL' as message;
     ELSE
-        -- Employee 존재 여부 확인
         SELECT COUNT(*) INTO employee_exists FROM employee WHERE id = p_employee_id;
         
         IF employee_exists = 0 THEN
@@ -1168,7 +936,6 @@ BEGIN
     END IF;
 END$$
 
--- 감사 로그 조회 프로시저
 CREATE PROCEDURE IF NOT EXISTS get_audit_log(
     IN p_table_name VARCHAR(50),
     IN p_record_id INT,
@@ -1182,7 +949,6 @@ BEGIN
         SELECT 'ERROR' as result, 'Database error occurred' as message;
     END;
     
-    -- Limit 유효성 검사
     IF p_limit IS NOT NULL THEN
         IF p_limit <= 0 THEN
             SET safe_limit = 100;
@@ -1194,7 +960,6 @@ BEGIN
     END IF;
     
     IF p_table_name IS NOT NULL AND p_record_id IS NOT NULL THEN
-        -- 특정 테이블의 특정 레코드
         SELECT a.*, e.name as employee_name
         FROM audit_log a
         LEFT JOIN employee e ON a.employee_id = e.id
@@ -1202,7 +967,6 @@ BEGIN
         ORDER BY a.changed_at DESC
         LIMIT safe_limit;
     ELSEIF p_table_name IS NOT NULL THEN
-        -- 특정 테이블의 모든 레코드
         SELECT a.*, e.name as employee_name
         FROM audit_log a
         LEFT JOIN employee e ON a.employee_id = e.id
@@ -1210,7 +974,6 @@ BEGIN
         ORDER BY a.changed_at DESC
         LIMIT safe_limit;
     ELSE
-        -- 모든 감사 로그
         SELECT a.*, e.name as employee_name
         FROM audit_log a
         LEFT JOIN employee e ON a.employee_id = e.id
@@ -1219,7 +982,6 @@ BEGIN
     END IF;
 END$$
 
--- Task 삭제 프로시저 (권한 체크 포함)
 CREATE PROCEDURE IF NOT EXISTS delete_task_with_permission(
     IN p_task_id INT,
     IN p_employee_id INT
@@ -1235,7 +997,6 @@ BEGIN
     
     START TRANSACTION;
     
-    -- NULL 체크
     IF p_task_id IS NULL OR p_employee_id IS NULL THEN
         SELECT 'INVALID_INPUT' as result, 'Task ID and Employee ID cannot be NULL' as message;
         ROLLBACK;

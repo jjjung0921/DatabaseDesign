@@ -14,4 +14,13 @@ public class Role {
 
     @Column(unique = true, nullable = false, length = 100)
     private String name;
+
+    @Column(name = "can_read", nullable = false)
+    private Boolean canRead = true;
+
+    @Column(name = "can_write", nullable = false)
+    private Boolean canWrite = false;
+
+    @Column(name = "can_delete", nullable = false)
+    private Boolean canDelete = false;
 }

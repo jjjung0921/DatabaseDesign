@@ -8,4 +8,7 @@ import lombok.Getter;
 public class RoleResponse {
     private final Long id;
     private final String name;
+    private final Boolean canRead;
+    private final Boolean canWrite;
+    private final Boolean canDelete;
 }

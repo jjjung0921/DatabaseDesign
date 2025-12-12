@@ -82,17 +82,6 @@
 
 <h1>PMIS Demo - Simple DB Test UI</h1>
 
-<p class="note">
-  이 페이지는 <strong>로컬에서 REST API와 DB 기능이 잘 동작하는지</strong>를 간단히 확인하기 위한 테스트용 UI입니다.<br>
-  각 섹션에서 입력 후 버튼을 눌러 API를 호출하면, 아래 <strong>결과 콘솔</strong>에 응답 JSON이 표시됩니다.
-</p>
-
-<!-- 공통: 결과 출력 영역 -->
-<h2>결과 콘솔</h2>
-<div id="output">아직 응답이 없습니다.</div>
-
-<hr>
-
 <!-- 1. Department -->
 <div class="section">
   <h2>1. Department (부서)</h2>
@@ -132,7 +121,12 @@
   <fieldset>
     <legend>역할 생성</legend>
     <label>역할명:</label>
-    <input type="text" id="roleName"><br>
+    <select id="roleName">
+      <option value="ADMIN">ADMIN</option>
+      <option value="MANAGER">MANAGER</option>
+      <option value="MEMBER" selected>MEMBER</option>
+      <option value="VIEWER">VIEWER</option>
+    </select><br>
     <button onclick="createRole()">POST /api/roles</button>
   </fieldset>
 
@@ -141,7 +135,12 @@
     <label>역할 ID:</label>
     <input type="number" id="roleId"><br>
     <label>새 이름(수정용):</label>
-    <input type="text" id="roleNewName"><br>
+    <select id="roleNewName">
+      <option value="ADMIN">ADMIN</option>
+      <option value="MANAGER">MANAGER</option>
+      <option value="MEMBER" selected>MEMBER</option>
+      <option value="VIEWER">VIEWER</option>
+    </select><br>
     <button onclick="getRoles()">GET /api/roles</button>
     <button onclick="getRole()">GET /api/roles/{id}</button>
     <button onclick="updateRole()">PUT /api/roles/{id}</button>

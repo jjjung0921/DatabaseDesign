@@ -5,10 +5,13 @@ DB_USER="${DB_USER:-pmis}"
 DB_PASS="${DB_PASS:-Pmis1234^^}"
 DB_NAME="${DB_NAME:-pmis_db}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PMIS_SQL="${PMIS_SQL:-${SCRIPT_DIR}/pmis.sql}"
+SQL_DIR="${SCRIPT_DIR}/sql"
+SCHEMA_SQL="${SCHEMA_SQL:-${SQL_DIR}/schema_base.sql}"
+SEED_SQL="${SEED_SQL:-${SQL_DIR}/seed_core.sql}"
+FUNC_SQL="${FUNC_SQL:-${SQL_DIR}/functions_permissions.sql}"
 DEMO_SQL="${DEMO_SQL:-${SCRIPT_DIR}/demo_setup.sql}"
 
-for f in "$PMIS_SQL" "$DEMO_SQL"; do
+for f in "$SCHEMA_SQL" "$SEED_SQL" "$FUNC_SQL" "$DEMO_SQL"; do
   if [ ! -f "$f" ]; then
     echo "필요한 SQL 파일을 찾을 수 없습니다: $f" >&2
     exit 1
@@ -22,7 +25,9 @@ mysql -u root -p -e "\
   GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost'; \
   FLUSH PRIVILEGES;"
 
-mysql -u root -p < "$PMIS_SQL"
+mysql -u root -p < "$SCHEMA_SQL"
+mysql -u root -p "$DB_NAME" < "$SEED_SQL"
+mysql -u root -p "$DB_NAME" < "$FUNC_SQL"
 mysql -u root -p "$DB_NAME" < "$DEMO_SQL"
 
-echo "완료: ${PMIS_SQL} / ${DEMO_SQL}을 ${DB_NAME}에 로드하고 ${DB_USER} 계정에 권한을 부여했다."
+echo "완료: schema/seed/functions/demo 스크립트를 ${DB_NAME}에 적용하고 ${DB_USER} 계정에 권한을 부여했습니다."

@@ -30,14 +30,11 @@ INSERT INTO department (id, name) VALUES
 
 
 -- 2. 역할 (Role) 생성
-INSERT INTO role (id, name) VALUES
-(1, 'Department Head'),      -- 부서장 (읽기 권한)
-(2, 'Project Manager'),       -- 프로젝트 관리자 (전체 권한)
-(3, 'Lead'),                  -- 리드 (쓰기 권한)
-(4, 'Developer'),             -- 개발자 (쓰기 권한)
-(5, 'Designer'),              -- 디자이너 (쓰기 권한)
-(6, 'Assignee'),              -- 담당자 (쓰기 권한)
-(7, 'Viewer');                -- 뷰어 (읽기만)
+INSERT INTO role (id, name, can_read, can_write, can_delete) VALUES
+(1, 'ADMIN', 1, 1, 1),    -- 최고 권한
+(2, 'MANAGER', 1, 1, 0),  -- 프로젝트 매니저
+(3, 'MEMBER', 1, 1, 0),   -- 일반 구성원 (쓰기 가능)
+(4, 'VIEWER', 1, 0, 0);   -- 읽기 전용
 
 
 -- 3. 직원 (Employee) 생성
@@ -114,33 +111,33 @@ INSERT INTO task (id, name, project_id, start_date, end_date, status, priority, 
 -- 8. 업무 배정 (TaskAssignment) - 권한 부여
 INSERT INTO task_assignment (task_id, employee_id, role_id) VALUES
 -- Task 1: UI/UX 디자인 (완료됨)
-(1, 202, 3),  -- 강민지 (Lead)
-(1, 203, 5),  -- 윤서연 (Designer)
+(1, 202, 3),  -- 강민지 (MEMBER)
+(1, 203, 3),  -- 윤서연 (MEMBER)
 
 -- Task 2: 백엔드 API 개발 (진행중) - 박민수가 접근 가능
-(2, 102, 3),  -- 이영희 (Lead) - PM이면서 Lead
-(2, 103, 4),  -- 박민수 (Developer) - 이 직원으로 테스트
-(2, 104, 4),  -- 최지훈 (Developer)
+(2, 102, 2),  -- 이영희 (MANAGER) - PM
+(2, 103, 3),  -- 박민수 (MEMBER) - 이 직원으로 테스트
+(2, 104, 3),  -- 최지훈 (MEMBER)
 
 -- Task 3: 프론트엔드 개발 (예정) - 박민수 접근 불가
-(3, 102, 3),  -- 이영희 (Lead)
-(3, 104, 4),  -- 최지훈 (Developer) - 박민수는 없음!
+(3, 102, 2),  -- 이영희 (MANAGER)
+(3, 104, 3),  -- 최지훈 (MEMBER) - 박민수는 없음!
 
 -- Task 4: QA 테스트
-(4, 102, 3),  -- 이영희 (Lead)
-(4, 103, 6),  -- 박민수 (Assignee)
+(4, 102, 2),  -- 이영희 (MANAGER)
+(4, 103, 3),  -- 박민수 (MEMBER)
 
 -- Task 7: 디자인 시안 작업 (진행중)
-(7, 202, 3),  -- 강민지 (Lead)
-(7, 203, 5),  -- 윤서연 (Designer)
+(7, 202, 3),  -- 강민지 (MEMBER)
+(7, 203, 3),  -- 윤서연 (MEMBER)
 
 -- Task 8: 웹 개발
-(8, 102, 3),  -- 이영희 (Lead)
-(8, 103, 4),  -- 박민수 (Developer)
+(8, 102, 2),  -- 이영희 (MANAGER)
+(8, 103, 3),  -- 박민수 (MEMBER)
 
 -- Task 10: 시장 조사
-(10, 301, 3), -- 한동욱 (Lead) - PM
-(10, 302, 6); -- 송하늘 (Assignee)
+(10, 301, 2), -- 한동욱 (MANAGER) - PM
+(10, 302, 3); -- 송하늘 (MEMBER)
 
 
 -- 9. 업무 의존성 (TaskDependency)
